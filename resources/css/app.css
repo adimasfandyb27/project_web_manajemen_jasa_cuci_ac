@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* ===== Emerald Sidebar Scrollbar ===== */
+.scrollbar-emerald {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: all 0.3s ease;
+}
+
+.scrollbar-emerald:hover {
+    scrollbar-color: rgba(16, 185, 129, 0.6) transparent;
+}
+
+.scrollbar-emerald::-webkit-scrollbar {
+    width: 0px;
+    transition: 0.3s;
+}
+
+.scrollbar-emerald:hover::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollbar-emerald::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.6);
+    border-radius: 9999px;
+}
