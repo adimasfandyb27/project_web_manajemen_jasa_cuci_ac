@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\ServiceOrder;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ServiceOrderController extends Controller
@@ -72,7 +73,7 @@ class ServiceOrderController extends Controller
                 ]);
         }
 
-        ServiceOrder::create([
+        $order = ServiceOrder::create([
             'nomor_order' => ServiceOrder::generateKode(),
             'customer_id' => $customer->id,
             'tanggal_order' => $request->tanggal_order,
@@ -85,6 +86,20 @@ class ServiceOrderController extends Controller
             'diskon' => 0,
             'grand_total' => 0,
         ]);
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($order)
+            ->event('create')
+            ->withProperties([
+                'nomor_order' => $order->nomor_order,
+                'customer_id' => $customer->id,
+                'jadwal_servis' => $order->jadwal_servis,
+                'alamat_servis' => $order->alamat_servis,
+                'ip' => $request->ip(),
+                'module' => 'Customer Order',
+            ])
+            ->log('Customer membuat order servis');
 
         return redirect()
             ->route('customer.orders')
@@ -153,15 +168,83 @@ class ServiceOrderController extends Controller
                 ]);
         }
 
+        $oldData = [
+            'alamat_servis' => $order->alamat_servis,
+            'jadwal_servis' => $order->jadwal_servis,
+            'keluhan' => $order->keluhan,
+        ];
+
         $order->update([
             'alamat_servis' => $request->alamat_servis,
             'jadwal_servis' => $request->jadwal_servis,
             'keluhan' => $request->keluhan,
         ]);
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($order)
+            ->event('update')
+            ->withProperties([
+                'nomor_order' => $order->nomor_order,
+                'old' => $oldData,
+                'new' => [
+                    'alamat_servis' => $order->alamat_servis,
+                    'jadwal_servis' => $order->jadwal_servis,
+                    'keluhan' => $order->keluhan,
+                ],
+                'ip' => $request->ip(),
+                'module' => 'Customer Order',
+            ])
+            ->log('Customer mengubah order servis');
+
         return redirect()
             ->route('customer.orders')
             ->with('success', 'Order berhasil diupdate');
+    }
+
+    public function cancel(Request $request, $id)
+    {
+        $request->validate([
+            'cancel_reason' => 'required|min:10|max:500'
+        ], [
+            'cancel_reason.required' => 'Alasan pembatalan wajib diisi.',
+            'cancel_reason.min' => 'Alasan pembatalan minimal 10 karakter.',
+        ]);
+
+        $customer = Customer::where('user_id', auth()->id())->first();
+
+        $order = ServiceOrder::where('id', $id)
+            ->where('customer_id', $customer->id)
+            ->firstOrFail();
+
+        if ($order->status !== 'pending') {
+            return back()->with(
+                'error',
+                'Order tidak dapat dibatalkan karena sedang diproses.'
+            );
+        }
+
+        $order->update([
+            'status' => 'dibatalkan',
+            'cancel_reason' => $request->cancel_reason,
+            'cancelled_at' => Carbon::now(),
+        ]);
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($order)
+            ->event('cancel')
+            ->withProperties([
+                'nomor_order' => $order->nomor_order,
+                'alasan' => $request->cancel_reason,
+                'ip' => $request->ip(),
+                'module' => 'Customer Order',
+            ])
+            ->log('Customer membatalkan order servis');
+
+        return redirect()
+            ->route('customer.orders')
+            ->with('success', 'Order berhasil dibatalkan.');
     }
 
     private function isKuotaPenuh($tanggal, $excludeOrderId = null)

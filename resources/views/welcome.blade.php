@@ -5,8 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Laravel</title>
-
+    <title>{{ $title ?? 'Service Center | Company Profile' }}</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />
@@ -14,6 +13,7 @@
     {{-- maps --}}
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
@@ -834,19 +834,7 @@
             display: none !important;
         }
     </style>
-</head>
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>Service Center | Company Profile</title>
-
-    <link href="https://fonts.bunny.net/css?family=figtree:400,600,700&display=swap" rel="stylesheet" />
-
-    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="font-[figtree] bg-gray-50 text-gray-800">
@@ -1851,7 +1839,10 @@ transition-all duration-500">
 
             <div class="overflow-hidden rounded-3xl shadow-2xl">
 
-                <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d8631.873906666211!2d112.75331056542068!3d-7.271348720688595!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sid!2sid!4v1782177372142!5m2!1sid!2sid" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d8631.873906666211!2d112.75331056542068!3d-7.271348720688595!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sid!2sid!4v1782177372142!5m2!1sid!2sid"
+                    width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"></iframe>
 
             </div>
 

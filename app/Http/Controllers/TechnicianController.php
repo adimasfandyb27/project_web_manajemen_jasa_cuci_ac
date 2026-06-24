@@ -61,13 +61,22 @@ class TechnicianController extends Controller
             'telepon' => 'required',
         ]);
 
-        Technician::create([
+        $technician = Technician::create([
             'kode_teknisi' => Technician::generateKode(),
             'nama' => $request->nama,
             'telepon' => $request->telepon,
             'alamat' => $request->alamat,
             'status' => $request->status ?? 'aktif',
         ]);
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($technician)
+            ->withProperties([
+                'ip' => $request->ip(),
+                'module' => 'Technician',
+            ])
+            ->log('Menambahkan Teknisi baru');
 
         return redirect()
             ->route('admin.technicians.index')
@@ -99,6 +108,15 @@ class TechnicianController extends Controller
     {
         $technician->update($request->all());
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($technician)
+            ->withProperties([
+                'ip' => $request->ip(),
+                'module' => 'Technician',
+            ])
+            ->log('Mengupdate data teknisi');
+
         return redirect()
             ->route('admin.technicians.index')
             ->with('success', 'Teknisi berhasil diperbarui');
@@ -107,7 +125,7 @@ class TechnicianController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Technician $technician)
+    public function destroy(Technician $technician , Request $request)
     {
         if ($technician->serviceOrders()->exists()) {
             return back()->with(
@@ -115,6 +133,15 @@ class TechnicianController extends Controller
                 'Teknisi tidak dapat dihapus karena sudah digunakan pada transaksi service.'
             );
         }
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($technician)
+            ->withProperties([
+                'ip' => $request->ip(),
+                'module' => 'Technician',
+            ])
+            ->log('Menghapus data teknisi');
 
         $technician->delete(); // lebih disarankan daripada forceDelete()
 

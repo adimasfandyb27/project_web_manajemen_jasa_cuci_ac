@@ -27,6 +27,10 @@ class ActivityLogController extends Controller
                     return $row->properties['ip'] ?? '-';
                 })
 
+                ->editColumn('created_at', function ($row) {
+                    return $row->created_at->format('d/m/Y H:i:s');
+                })
+
                 ->make(true);
         }
 

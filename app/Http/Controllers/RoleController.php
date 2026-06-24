@@ -111,6 +111,19 @@ class RoleController extends Controller
             $request->permissions ?? []
         );
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($role)
+            ->event('create')
+            ->withProperties([
+                'role_id' => $role->id,
+                'role_name' => $role->name,
+                'permission_count' => count($request->permissions ?? []),
+                'permissions' => $request->permissions ?? [],
+                'ip' => $request->ip(),
+            ])
+            ->log("Membuat role {$role->name}");
+
         return redirect()
             ->route('admin.roles.index')
             ->with('success', 'Role berhasil dibuat.');
@@ -138,7 +151,7 @@ class RoleController extends Controller
             });
 
         return view(
-'admin.roles.edit',
+            'admin.roles.edit',
             compact(
                 'role',
                 'permissions'
@@ -163,6 +176,19 @@ class RoleController extends Controller
             $request->permissions ?? []
         );
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($role)
+            ->event('update')
+            ->withProperties([
+                'role_id' => $role->id,
+                'role_name' => $role->name,
+                'permission_count' => count($request->permissions ?? []),
+                'permissions' => $request->permissions ?? [],
+                'ip' => $request->ip(),
+            ])
+            ->log("Memperbarui role {$role->name}");
+
         return redirect()
             ->route('admin.roles.index')
             ->with('success', 'Role berhasil diperbarui.');
@@ -183,6 +209,16 @@ class RoleController extends Controller
                 'Role sistem tidak dapat dihapus.'
             );
         }
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($role)
+            ->event('delete')
+            ->withProperties([
+                'role_name' => $role->name,
+                'ip' => request()->ip(),
+            ])
+            ->log("Menghapus role {$role->name}");
 
         $role->delete();
 

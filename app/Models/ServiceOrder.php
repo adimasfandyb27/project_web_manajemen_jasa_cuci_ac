@@ -24,7 +24,9 @@ class ServiceOrder extends Model
         'subtotal_jasa',
         'subtotal_sparepart',
         'diskon',
-        'grand_total'
+        'grand_total',
+        'cancel_reason',
+        'cancelled_at',
     ];
 
     public static function generateKode()
@@ -69,5 +71,4 @@ class ServiceOrder extends Model
     {
         return $this->hasOne(Invoice::class);
     }
-    
 }

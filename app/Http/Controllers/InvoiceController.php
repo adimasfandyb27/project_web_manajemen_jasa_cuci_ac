@@ -158,6 +158,20 @@ class InvoiceController extends Controller
             'total'  => $invoice->subtotal - $diskon,
         ]);
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($invoice)
+            ->event('update')
+            ->withProperties([
+                'nomor_invoice' => $invoice->nomor_invoice,
+                'subtotal' => $invoice->subtotal,
+                'diskon' => $diskon,
+                'total' => $invoice->total,
+                'ip' => $request->ip(),
+                'module' => 'Invoice',
+            ])
+            ->log('Memperbarui invoice');
+
         return redirect()
             ->route('admin.invoices.index')
             ->with('success', 'Invoice berhasil diperbarui');
@@ -166,6 +180,18 @@ class InvoiceController extends Controller
     public function destroy(Invoice $invoice)
     {
         $invoice->delete();
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($invoice)
+            ->event('delete')
+            ->withProperties([
+                'nomor_invoice' => $invoice->nomor_invoice,
+                'total' => $invoice->total,
+                'ip' => request()->ip(),
+                'module' => 'Invoice',
+            ])
+            ->log('Menghapus invoice');
 
         return redirect()
             ->route('admin.invoices.index')
@@ -177,6 +203,19 @@ class InvoiceController extends Controller
         $invoice->update([
             'status' => 'lunas'
         ]);
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($invoice)
+            ->event('paid')
+            ->withProperties([
+                'nomor_invoice' => $invoice->nomor_invoice,
+                'total' => $invoice->total,
+                'status' => 'lunas',
+                'ip' => request()->ip(),
+                'module' => 'Invoice',
+            ])
+            ->log('Invoice dilunasi');
 
         return back()->with(
             'success',
@@ -204,6 +243,20 @@ class InvoiceController extends Controller
             'status' => 'lunas',
             'bukti_bayar' => $path,
         ]);
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($invoice)
+            ->event('paid')
+            ->withProperties([
+                'nomor_invoice' => $invoice->nomor_invoice,
+                'total' => $invoice->total,
+                'bukti_bayar' => $path,
+                'status' => 'lunas',
+                'ip' => $request->ip(),
+                'module' => 'Invoice',
+            ])
+            ->log('Invoice dilunasi dengan bukti pembayaran');
 
         return redirect()
             ->route('admin.invoices.index')

@@ -142,17 +142,26 @@
 
                         <div class="flex gap-3">
 
-                            <a href="{{ route('customer.orders.show', $order->id) }}"
-                                class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition text-sm font-medium">
-                                Detail
-                            </a>
+                            <div class="flex flex-wrap gap-3">
 
-                            @if ($order->status == 'pending')
-                                <a href="{{ route('customer.orders.edit', $order->id) }}"
-                                    class="px-4 py-2 rounded-xl bg-amber-500 text-white hover:bg-amber-600 transition text-sm font-medium">
-                                    Edit
+                                <a href="{{ route('customer.orders.show', $order->id) }}"
+                                    class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition text-sm font-medium">
+                                    Detail
                                 </a>
-                            @endif
+
+                                @if ($order->status == 'pending')
+                                    <a href="{{ route('customer.orders.edit', $order->id) }}"
+                                        class="px-4 py-2 rounded-xl bg-amber-500 text-white hover:bg-amber-600 transition text-sm font-medium">
+                                        Edit
+                                    </a>
+
+                                    <button type="button" onclick="cancelOrder({{ $order->id }})"
+                                        class="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition text-sm font-medium">
+                                        Batalkan
+                                    </button>
+                                @endif
+
+                            </div>
 
                         </div>
 
@@ -186,4 +195,54 @@
         </div>
     @endif
 
+    <form id="cancelOrderForm" method="POST" style="display:none;">
+        @csrf
+        @method('PATCH')
+
+        <input type="hidden" name="cancel_reason" id="cancel_reason">
+    </form>
+
+    <script>
+        function cancelOrder(orderId) {
+
+            Swal.fire({
+                title: 'Batalkan Order?',
+                text: 'Silakan masukkan alasan pembatalan.',
+                input: 'textarea',
+                inputPlaceholder: 'Contoh: Jadwal berubah, lokasi pindah, AC sudah diperbaiki sendiri...',
+                inputAttributes: {
+                    maxlength: 500
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Batalkan',
+                cancelButtonText: 'Kembali',
+                confirmButtonColor: '#ef4444',
+
+                inputValidator: (value) => {
+
+                    if (!value) {
+                        return 'Alasan pembatalan wajib diisi';
+                    }
+
+                    if (value.length < 10) {
+                        return 'Alasan minimal 10 karakter';
+                    }
+                }
+
+            }).then((result) => {
+
+                if (result.isConfirmed) {
+
+                    document.getElementById('cancel_reason').value = result.value;
+
+                    let form = document.getElementById('cancelOrderForm');
+
+                    form.action = "{{ url('/customer/orders') }}/" + orderId + "/cancel";
+
+                    form.submit();
+                }
+
+            });
+        }
+    </script>
 @endsection

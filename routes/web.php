@@ -29,8 +29,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
-})->name('welcome');
+    return view('welcome', [
+        'title' => 'Service Center | Company Profile'
+    ]);
+})->name('home');
 
 Route::middleware(['auth', 'role:Owner|Admin|Teknisi'])
     ->prefix('admin')
@@ -158,6 +160,11 @@ Route::middleware(['auth', 'role:customer'])
 
         Route::put('/orders/{id}', [\App\Http\Controllers\Customer\ServiceOrderController::class, 'update'])
             ->name('orders.update');
+
+        Route::patch(
+            '/orders/{id}/cancel',
+            [\App\Http\Controllers\Customer\ServiceOrderController::class, 'cancel']
+        )->name('orders.cancel');
 
         Route::get('/profile', [CustomerProfileController::class, 'edit'])
             ->name('profile.edit');

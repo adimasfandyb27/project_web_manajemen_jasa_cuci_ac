@@ -45,7 +45,7 @@
             </div>
 
             {{-- FORM --}}
-            <form action="{{ route('customers.update', $customer->id) }}" method="POST" class="p-6">
+            <form action="{{ route('admin.customers.update', $customer->id) }}" method="POST" class="p-6">
 
                 @csrf
                 @method('PUT')

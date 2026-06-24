@@ -106,6 +106,20 @@ class UserController extends Controller
             ]);
 
             $user->assignRole($request->role);
+
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($user)
+                ->event('create')
+                ->withProperties([
+                    'user_id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $request->role,
+                    'ip' => $request->ip(),
+                    'module' => 'User',
+                ])
+                ->log("Membuat user {$user->name}");
         } catch (\Exception $e) {
 
             dd($e->getMessage());
@@ -137,6 +151,12 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        $oldData = [
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->roles->pluck('name')->first(),
+        ];
+
         $request->validate([
             'name' => 'required',
             'email' => 'required|email',
@@ -147,6 +167,21 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => $request->password ? bcrypt($request->password) : $user->password,
         ]);
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($user)
+            ->event('update')
+            ->withProperties([
+                'old' => $oldData,
+                'new' => [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $request->role,
+                ],
+                'ip' => $request->ip(),
+            ])
+            ->log("Mengubah user {$user->name}");
 
         // sync role (Spatie Permission)
         if ($request->role) {
@@ -167,6 +202,18 @@ class UserController extends Controller
             return redirect()->route('admin.users.index')
                 ->with('error', 'Anda tidak dapat menghapus akun sendiri.');
         }
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($user)
+            ->event('delete')
+            ->withProperties([
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->roles->pluck('name')->implode(', '),
+                'ip' => request()->ip(),
+            ])
+            ->log("Menghapus user {$user->name}");
 
         $user->delete();
 

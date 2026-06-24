@@ -73,12 +73,22 @@ class ServiceController extends Controller
             'harga' => 'required|numeric',
         ]);
 
-        Service::create([
+        $service = Service::create([
             'kode_layanan' => Service::generateKode(),
             'nama_layanan' => $request->nama_layanan,
             'harga' => $request->harga,
             'deskripsi' => $request->deskripsi,
         ]);
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($service)
+            ->withProperties([
+                'ip' => $request->ip(),
+                'module' => 'Service',
+            ])
+            ->log('Menambahkan layanan baru');
+
         return redirect()
             ->route('admin.services.index')
             ->with('success', 'Layanan berhasil ditambahkan');
@@ -108,6 +118,15 @@ class ServiceController extends Controller
     {
         $service->update($request->all());
 
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($service)
+            ->withProperties([
+                'ip' => $request->ip(),
+                'module' => 'Service',
+            ])
+            ->log('Mengudate data layanan');
+
         return redirect()
             ->route('admin.services.index')
             ->with('success', 'Layanan berhasil diperbarui');
@@ -116,7 +135,7 @@ class ServiceController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Service $service)
+    public function destroy(Service $service, Request $request)
     {
         if ($service->serviceOrderDetails()->exists()) {
             return back()->with(
@@ -124,6 +143,15 @@ class ServiceController extends Controller
                 'Layanan tidak dapat dihapus karena sudah digunakan pada transaksi service.'
             );
         }
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($service)
+            ->withProperties([
+                'ip' => $request->ip(),
+                'module' => 'Service',
+            ])
+            ->log('Menghapus data layanan');
 
         $service->forceDelete(); // lebih baik daripada forceDelete()
 

@@ -222,6 +222,22 @@ class ServiceOrderController extends Controller
                 'subtotal_sparepart' => $request->subtotal_sparepart ?? 0,
                 'grand_total' => $grandTotal,
             ]);
+
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($order)
+                ->event('create')
+                ->withProperties([
+                    'nomor_order' => $order->nomor_order,
+                    'customer' => $order->customer_id,
+                    'technician' => $order->technician_id,
+                    'subtotal_jasa' => $subtotal,
+                    'subtotal_sparepart' => $request->subtotal_sparepart ?? 0,
+                    'diskon' => $request->diskon ?? 0,
+                    'grand_total' => $grandTotal,
+                    'ip' => $request->ip(),
+                ])
+                ->log('Membuat order servis baru');
         });
 
         return redirect()
@@ -347,6 +363,19 @@ class ServiceOrderController extends Controller
                 'catatan' => $request->catatan,
             ]);
 
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($serviceOrder)
+                ->event('update')
+                ->withProperties([
+                    'nomor_order' => $serviceOrder->nomor_order,
+                    'status_lama' => $oldStatus,
+                    'status_baru' => $request->status,
+                    'grand_total' => $grandTotal,
+                    'ip' => $request->ip(),
+                ])
+                ->log('Memperbarui order servis');
+
             // ==================================
             // AUTO CREATE INVOICE
             // ==================================
@@ -359,7 +388,7 @@ class ServiceOrderController extends Controller
 
                 try {
 
-                    Invoice::create([
+                    $invoice =Invoice::create([
                         'nomor_invoice' => Invoice::generateNomor(),
                         'service_order_id' => $serviceOrder->id,
                         'tanggal_invoice' => now(),
@@ -368,6 +397,18 @@ class ServiceOrderController extends Controller
                         'total' => $grandTotal,
                         'status' => 'belum_bayar',
                     ]);
+
+                    activity()
+                        ->causedBy(auth()->user())
+                        ->performedOn($invoice)
+                        ->event('create')
+                        ->withProperties([
+                            'nomor_invoice' => $invoice->nomor_invoice,
+                            'nomor_order' => $serviceOrder->nomor_order,
+                            'total' => $invoice->total,
+                        ])
+                        ->log('Invoice otomatis dibuat karena order selesai');
+                        
                 } catch (\Exception $e) {
 
                     dd($e->getMessage());
