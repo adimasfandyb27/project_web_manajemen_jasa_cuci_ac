@@ -43,7 +43,7 @@
         <!-- FORM -->
         <div class="lg:col-span-2">
 
-            <form action="{{ route('customer.orders.store') }}" method="POST"
+            <form x-data="customerOrder()" action="{{ route('customer.orders.store') }}" method="POST"
                 class="bg-white rounded-3xl shadow-sm border p-8">
 
                 @csrf
@@ -91,6 +91,77 @@
                     <input type="date" name="jadwal_servis" min="{{ now()->format('Y-m-d') }}"
                         value="{{ old('jadwal_servis') }}"
                         class="w-full border-gray-200 rounded-2xl focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+
+                <div class="bg-white rounded-3xl shadow-sm border p-6 mb-6">
+
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-800">Pilih Layanan</h3>
+
+                        <button type="button" @click="addRow()"
+                            class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-sm">
+                            + Tambah
+                        </button>
+                    </div>
+
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-gray-500">
+                                <th>Layanan</th>
+                                <th>Harga</th>
+                                <th>Qty</th>
+                                <th>Subtotal</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <template x-for="(item,index) in items" :key="index">
+
+                                <tr class="border-t">
+
+                                    <td class="py-2">
+                                        <select x-model="item.service_id" @change="syncService(index)"
+                                            :name="'items[' + index + '][service_id]'" class="w-full border rounded-lg p-2">
+
+                                            <option value="">Pilih</option>
+                                            @foreach ($services as $service)
+                                                <option value="{{ $service->id }}">
+                                                    {{ $service->nama_layanan }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+
+                                    <td>
+                                        <input type="hidden" :name="'items[' + index + '][harga]'" :value="item.harga">
+                                        <input type="text" x-model="item.harga" readonly
+                                            class="bg-gray-50 p-2 rounded w-full">
+                                    </td>
+
+                                    <td>
+                                        <input type="number" min="1" x-model="item.qty" @input="calc(index)"
+                                            :name="'items[' + index + '][qty]'" class="border p-2 rounded w-full">
+                                    </td>
+
+                                    <td>
+                                        <span x-text="format(item.subtotal)"></span>
+                                    </td>
+
+                                    <td>
+                                        <button type="button" @click="remove(index)" class="text-red-500">X</button>
+                                    </td>
+
+                                </tr>
+
+                            </template>
+                        </tbody>
+                    </table>
+
+                    <div class="mt-4 font-bold text-right">
+                        Total: <span x-text="format(total())"></span>
+                    </div>
+
                 </div>
 
                 <!-- BUTTON -->
@@ -204,5 +275,59 @@
         </div>
 
     </div>
+
+
+    <script>
+        function customerOrder() {
+            return {
+                services: @json($services),
+
+                items: [{
+                    service_id: '',
+                    harga: 0,
+                    qty: 1,
+                    subtotal: 0
+                }],
+
+                addRow() {
+                    this.items.push({
+                        service_id: '',
+                        harga: 0,
+                        qty: 1,
+                        subtotal: 0
+                    });
+                },
+
+                remove(i) {
+                    this.items.splice(i, 1);
+                },
+
+                syncService(i) {
+                    let s = this.services.find(x => x.id == this.items[i].service_id);
+                    if (s) {
+                        this.items[i].harga = Number(s.harga);
+                        this.calc(i);
+                    }
+                },
+
+                calc(i) {
+                    this.items[i].subtotal =
+                        Number(this.items[i].harga) *
+                        Number(this.items[i].qty);
+                },
+
+                total() {
+                    return this.items.reduce((a, b) => a + Number(b.subtotal), 0);
+                },
+
+                format(n) {
+                    return new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR'
+                    }).format(n);
+                }
+            }
+        }
+    </script>
 
 @endsection

@@ -64,18 +64,69 @@
                 <div class="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
 
                     <p class="text-sm text-gray-500">
+                        Sudah Dibayar
+                    </p>
+
+                    <h3 class="text-xl font-bold text-blue-600 mt-2">
+                        Rp {{ number_format($totalPaid, 0, ',', '.') }}
+                    </h3>
+
+                </div>
+
+                <div class="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
+
+                    <p class="text-sm text-gray-500">
+                        Sisa Tagihan
+                    </p>
+
+                    <h3 class="text-xl font-bold text-red-600 mt-2">
+                        Rp {{ number_format($remaining, 0, ',', '.') }}
+                    </h3>
+
+                </div>
+
+                <div class="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
+
+                    <p class="text-sm text-gray-500">
                         Status Invoice
                     </p>
 
                     <h3 class="text-xl font-bold mt-2">
 
+                        @php
+
+                            $totalPaid = $invoice->payments->where('status', 'verified')->sum('amount');
+
+                        @endphp
                         @if ($invoice->status == 'lunas')
-                            <span class="text-emerald-600">
-                                Lunas
+                            <span
+                                class="inline-flex items-center gap-2
+        px-4 py-2 rounded-full
+        bg-emerald-100 text-emerald-700
+        font-semibold">
+
+                                ✓ Lunas
+
+                            </span>
+                        @elseif($totalPaid > 0)
+                            <span
+                                class="inline-flex items-center gap-2
+        px-4 py-2 rounded-full
+        bg-orange-100 text-orange-700
+        font-semibold">
+
+                                💰 DP Dibayar
+
                             </span>
                         @else
-                            <span class="text-orange-500">
-                                Belum Bayar
+                            <span
+                                class="inline-flex items-center gap-2
+        px-4 py-2 rounded-full
+        bg-red-100 text-red-700
+        font-semibold">
+
+                                ⏳ Belum Bayar
+
                             </span>
                         @endif
 
@@ -131,27 +182,49 @@
 
                         {{-- STATUS --}}
                         <div>
+
                             @if ($invoice->status == 'lunas')
                                 <span
                                     class="inline-flex items-center gap-2
-                                            px-4 py-2 rounded-full
-                                            bg-emerald-100 text-emerald-700
-                                            font-semibold">
+        px-4 py-2 rounded-full
+        bg-emerald-100 text-emerald-700
+        font-semibold">
 
                                     ✓ Lunas
+
+                                </span>
+                            @elseif($totalPaid > 0)
+                                <span
+                                    class="inline-flex items-center gap-2
+        px-4 py-2 rounded-full
+        bg-orange-100 text-orange-700
+        font-semibold">
+
+                                    💰 DP Dibayar
+
+                                </span>
+                            @elseif($pendingPayment > 0)
+                                <span
+                                    class="inline-flex items-center gap-2
+        px-4 py-2 rounded-full
+        bg-yellow-100 text-yellow-700
+        font-semibold">
+
+                                    ⏳ Menunggu Verifikasi
 
                                 </span>
                             @else
                                 <span
                                     class="inline-flex items-center gap-2
-                                            px-4 py-2 rounded-full
-                                            bg-orange-100 text-orange-700
-                                            font-semibold">
+        px-4 py-2 rounded-full
+        bg-red-100 text-red-700
+        font-semibold">
 
-                                    ⏳ Belum Bayar
+                                    ❌ Belum Bayar
 
                                 </span>
                             @endif
+
                         </div>
 
                     </div>
@@ -316,6 +389,103 @@
 
             </div>
 
+            <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+
+                <h4 class="font-bold text-gray-900 mb-5">
+                    Riwayat Pembayaran
+                </h4>
+
+                @forelse($invoice->payments as $payment)
+                    <div class="border rounded-2xl p-4 mb-3">
+
+                        <div class="flex justify-between items-center">
+
+                            <div>
+
+                                <p class="font-semibold text-gray-900">
+
+                                    {{ strtoupper($payment->payment_type) }}
+
+                                </p>
+
+                                @if ($payment->payment_type == 'dp')
+                                    <span
+                                        class="inline-block mt-1 px-2 py-1 text-xs rounded-lg
+        bg-orange-100 text-orange-700">
+                                        DP 50%
+                                    </span>
+                                @else
+                                    <span
+                                        class="inline-block mt-1 px-2 py-1 text-xs rounded-lg
+        bg-emerald-100 text-emerald-700">
+                                        Pelunasan
+                                    </span>
+                                @endif
+
+                                <p class="text-sm text-gray-500">
+
+                                    {{ ucfirst($payment->payment_method) }}
+
+                                </p>
+
+                                <p class="text-xs text-gray-400 mt-1">
+                                    {{ \Carbon\Carbon::parse($payment->paid_at)->format('d M Y H:i') }}
+                                </p>
+
+                            </div>
+
+                            <div class="text-right">
+
+                                <p class="font-bold text-emerald-600">
+
+                                    Rp {{ number_format($payment->amount, 0, ',', '.') }}
+
+                                </p>
+
+                                @if ($payment->status == 'verified')
+                                    <span class="text-green-600 text-sm">
+                                        Terverifikasi
+                                    </span>
+                                @elseif($payment->status == 'pending')
+                                    <span class="text-orange-500 text-sm">
+                                        Menunggu Verifikasi
+                                    </span>
+                                @else
+                                    <span class="text-red-500 text-sm">
+                                        Ditolak
+                                    </span>
+                                @endif
+
+                            </div>
+
+                        </div>
+
+                        @if ($payment->proof_file)
+                            <div class="mt-3">
+
+                                <a href="{{ asset('storage/' . $payment->proof_file) }}" target="_blank"
+                                    class="text-emerald-600 font-medium hover:underline">
+
+                                    Lihat Bukti Transfer
+
+                                </a>
+
+                            </div>
+                        @endif
+
+                    </div>
+
+                @empty
+
+                    <div class="text-center py-6 text-gray-500">
+
+                        Belum ada pembayaran
+
+                    </div>
+                @endforelse
+
+            </div>
+
             {{-- RINCIAN BIAYA --}}
             <div
                 class="bg-gradient-to-r
@@ -354,6 +524,22 @@
                         </span>
                     </div>
 
+                    @if ($totalPaid > 0)
+                        <div class="flex justify-between text-yellow-200">
+                            <span>Total Dibayar</span>
+                            <span>
+                                Rp {{ number_format($totalPaid, 0, ',', '.') }}
+                            </span>
+                        </div>
+
+                        <div class="flex justify-between text-white font-bold">
+                            <span>Sisa Tagihan</span>
+                            <span>
+                                Rp {{ number_format($remaining, 0, ',', '.') }}
+                            </span>
+                        </div>
+                    @endif
+
                     <div class="border-t border-white/20 pt-5">
 
                         <div class="flex justify-between items-center">
@@ -361,11 +547,15 @@
                             <div>
 
                                 <p class="uppercase tracking-widest text-xs text-emerald-100">
-                                    Total Tagihan
+                                    @if ($totalPaid > 0)
+                                        Sisa Tagihan
+                                    @else
+                                        Total Tagihan
+                                    @endif
                                 </p>
 
                                 <h3 class="text-4xl font-bold mt-2">
-                                    Rp {{ number_format($invoice->total, 0, ',', '.') }}
+                                    Rp {{ number_format($totalPaid > 0 ? $remaining : $invoice->total, 0, ',', '.') }}
                                 </h3>
 
                             </div>

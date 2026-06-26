@@ -4,10 +4,12 @@
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Customer\CustomerDashboardController;
 use App\Http\Controllers\Customer\CustomerInvoiceController;
+use App\Http\Controllers\Customer\CustomerPaymentController;
 use App\Http\Controllers\Customer\CustomerProfileController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
@@ -72,18 +74,43 @@ Route::middleware(['auth', 'role:Owner|Admin|Teknisi'])
         )->name('invoices.export.pdf');
 
         Route::get('/invoices/{invoice}/print', [InvoiceController::class, 'print'])
-            ->name('invoices.print');
+        ->name('invoices.print');
 
         Route::patch('/invoices/{invoice}/paid', [InvoiceController::class, 'markAsPaid'])
-            ->name('invoices.paid');
+        ->name('invoices.paid');
 
         Route::post('/invoices/{invoice}/paid-proof', [InvoiceController::class, 'markAsPaidWithProof'])
-            ->name('invoices.paid.proof');
+        ->name('invoices.paid.proof');
 
         Route::get('/invoices/{invoice}/export', [InvoiceController::class, 'export'])
-            ->name('invoices.export');
+        ->name('invoices.export');
 
         Route::resource('invoices', InvoiceController::class);
+
+        //payments
+        Route::get(
+            '/payments/export-pdf',
+            [PaymentController::class, 'exportPdf']
+        )->name('payments.export.pdf');
+
+        Route::get('/payments/data', [PaymentController::class, 'data'])
+        ->name('payments.data');
+
+        Route::resource('payments', PaymentController::class)
+        ->only(['index', 'show']);
+
+        Route::patch(
+            '/payments/{payment}/verify',
+            [PaymentController::class, 'verify']
+        )->name('payments.verify');
+
+        Route::patch(
+            '/payments/{payment}/reject',
+            [PaymentController::class, 'reject']
+        )->name('payments.reject');
+
+        Route::get('/payments/{payment}/export', [PaymentController::class, 'export'])
+            ->name('payments.export');
 
         // Roles
         Route::resource('roles', RoleController::class);
@@ -179,7 +206,17 @@ Route::middleware(['auth', 'role:customer'])
         Route::get('/invoices/{id}', [CustomerInvoiceController::class, 'show'])
             ->name('invoices.show');
 
-        Route::get('/invoices/{id}/print', [CustomerInvoiceController::class, 'print'])
-            ->name('invoices.print');
+        // Route::get('/invoices/{id}/print', [CustomerInvoiceController::class, 'print'])
+        //     ->name('invoices.print');
+
+        Route::post(
+            '/payments',
+            [CustomerPaymentController::class, 'store']
+        )->name('payments.store');
+
+        Route::get(
+            '/invoices/{invoice}/payments',
+            [CustomerPaymentController::class, 'history']
+        )->name('payments.history');
     });
 require __DIR__ . '/auth.php';

@@ -1,7 +1,7 @@
 <aside
     x-data="{
         openMaster: {{ request()->routeIs('admin.customers.*', 'admin.technicians.*', 'admin.services.*') ? 'true' : 'false' }},
-        openTransaksi: {{ request()->routeIs('admin.service-orders.*', 'admin.invoices.*') ? 'true' : 'false' }},
+        openTransaksi: {{ request()->routeIs('admin.service-orders.*', 'admin.invoices.*', 'admin.payments.*') ? 'true' : 'false' }},
         openLaporan: {{ request()->routeIs('admin.reports.*') ? 'true' : 'false' }},
         openSetting: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.activity-logs.*') ? 'true' : 'false' }}
     }"
@@ -94,7 +94,7 @@
         @endcanany
 
         {{-- ================= TRANSAKSI ================= --}}
-        @canany(['serviceorders.view', 'invoices.view'])
+        @canany(['serviceorders.view', 'invoices.view', 'payments.view'])
         <div class="space-y-1">
 
             <button @click="openTransaksi = !openTransaksi"
@@ -122,8 +122,9 @@
                 x-transition:leave-end="opacity-0 -translate-y-1"
                 class="space-y-1 pl-1">
 
-                @foreach ([['route' => 'admin.service-orders.index', 'label' => 'Order Servis', 'icon' => '📋'],
-                          ['route' => 'admin.invoices.index', 'label' => 'Invoice', 'icon' => '🧾']] as $menu)
+                @foreach ([['route' => 'admin.service-orders.index', 'label' => 'Data Pemesanan', 'icon' => '📋'],
+                          ['route' => 'admin.invoices.index', 'label' => 'Data Invoice', 'icon' => '🧾'],
+                          ['route' => 'admin.payments.index', 'label' => 'Data Pembayaran', 'icon' => '🧾']] as $menu)
 
                     <a href="{{ route($menu['route']) }}"
                        class="flex items-center gap-3 px-3 py-3 rounded-xl
@@ -145,7 +146,7 @@
         @endcanany
 
         {{-- ================= LAPORAN ================= --}}
-        @canany(['reports.service_orders', 'reports.revenue', 'reports.customers'])
+        @canany(['reports.view', 'reports.view', 'reports.view'])
         <div class="space-y-1">
 
             <button @click="openLaporan = !openLaporan"
@@ -173,7 +174,7 @@
                 x-transition:leave-end="opacity-0 -translate-y-1"
                 class="space-y-1 pl-1">
 
-                @foreach ([['route' => 'admin.reports.service-orders', 'label' => 'Laporan Servis', 'icon' => '📄'],
+                @foreach ([['route' => 'admin.reports.service-orders', 'label' => 'Laporan Pemesanan', 'icon' => '📄'],
                           ['route' => 'admin.reports.revenue', 'label' => 'Laporan Pendapatan', 'icon' => '💰'],
                           ['route' => 'admin.reports.customers', 'label' => 'Laporan Customer', 'icon' => '👥']] as $menu)
 

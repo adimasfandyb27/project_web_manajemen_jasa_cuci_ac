@@ -42,6 +42,42 @@
                 {{ $order->status !== 'pending' ? 'disabled' : '' }}>{{ $order->keluhan }}</textarea>
         </div>
 
+        <!-- DETAIL LAYANAN -->
+        <div class="mt-6">
+            <h2 class="text-lg font-bold mb-3">Detail Layanan</h2>
+
+            <button type="button" onclick="addRow()" class="mb-3 bg-emerald-600 text-white px-3 py-2 rounded-lg">
+                + Tambah Layanan
+            </button>
+
+            <div class="space-y-3" id="items-wrapper">
+
+                @foreach ($order->details as $i => $detail)
+                    <div class="grid grid-cols-4 gap-2 item-row">
+
+                        <select name="items[{{ $i }}][service_id]" class="border p-2 rounded">
+                            @foreach ($services as $service)
+                                <option value="{{ $service->id }}"
+                                    {{ $service->id == $detail->service_id ? 'selected' : '' }}>
+                                    {{ $service->nama_layanan }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <input type="number" name="items[{{ $i }}][qty]" value="{{ $detail->qty }}"
+                            class="border p-2 rounded">
+
+                        <input type="text" value="{{ number_format($detail->harga) }}" readonly
+                            class="border p-2 rounded bg-gray-100">
+
+                        <button type="button" onclick="removeRow(this)" class="text-red-500">Hapus</button>
+
+                    </div>
+                @endforeach
+
+            </div>
+        </div>
+
         @if ($order->status === 'pending')
             <button class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700">
                 Update Order
@@ -49,4 +85,41 @@
         @endif
 
     </form>
+
+
+    <script>
+        function addRow() {
+            let wrapper = document.getElementById('items-wrapper');
+
+            let index = wrapper.children.length;
+
+            let html = `
+    <div class="grid grid-cols-4 gap-2 item-row mt-2">
+
+        <select name="items[${index}][service_id]" class="border p-2 rounded">
+            @foreach ($services as $service)
+                <option value="{{ $service->id }}">
+                    {{ $service->nama_layanan }}
+                </option>
+            @endforeach
+        </select>
+
+        <input type="number" name="items[${index}][qty]" value="1"
+            class="border p-2 rounded">
+
+        <input type="text" value="-" readonly class="border p-2 rounded bg-gray-100">
+
+        <button type="button" onclick="removeRow(this)"
+            class="text-red-500">Hapus</button>
+
+    </div>
+    `;
+
+            wrapper.insertAdjacentHTML('beforeend', html);
+        }
+
+        function removeRow(btn) {
+            btn.closest('.item-row').remove();
+        }
+    </script>
 @endsection

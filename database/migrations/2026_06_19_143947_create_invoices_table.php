@@ -21,6 +21,8 @@ return new class extends Migration
 
             $table->date('tanggal_invoice');
 
+            $table->date('jatuh_tempo')->nullable();
+
             $table->decimal('subtotal', 15, 2)->default(0);
             $table->decimal('diskon', 15, 2)->default(0);
             $table->decimal('total', 15, 2)->default(0);
@@ -28,6 +30,7 @@ return new class extends Migration
             $table->enum('status', [
                 'draft',
                 'belum_bayar',
+                'bayar_sebagian',
                 'lunas'
             ])->default('draft');
 

@@ -23,7 +23,8 @@ class CustomerInvoiceController extends Controller
     {
         $invoice = Invoice::with([
             'serviceOrder.customer',
-            'serviceOrder'
+            'serviceOrder.details.service',
+            'payments'
         ])
             ->where('id', $id)
             ->whereHas('serviceOrder.customer', function ($q) {
@@ -31,7 +32,17 @@ class CustomerInvoiceController extends Controller
             })
             ->firstOrFail();
 
-        return view('customer.invoices.show', compact('invoice'));
+        $totalPaid = $invoice->payments
+            ->where('status', 'verified')
+            ->sum('amount');
+
+        return view(
+            'customer.invoices.show',
+            compact(
+                'invoice',
+                'totalPaid'
+            )
+        );
     }
 
     public function print($id)

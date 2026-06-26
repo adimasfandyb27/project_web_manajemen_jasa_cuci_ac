@@ -27,3 +27,29 @@
     background: rgba(16, 185, 129, 0.6);
     border-radius: 9999px;
 }
+
+
+.btn-detail {
+    display: inline-block;
+    background: #4698e5;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: .2s;
+}
+
+.btn-detail:hover {
+    background: #4338ca;
+}
+
+.btn-view {
+    display: inline-block;
+    background: #4b5563;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+}

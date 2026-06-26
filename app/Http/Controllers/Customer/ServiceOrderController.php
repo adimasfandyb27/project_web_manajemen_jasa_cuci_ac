@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Service;
 use App\Models\ServiceOrder;
+use App\Models\ServiceOrderDetail;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ServiceOrderController extends Controller
 {
@@ -25,6 +28,7 @@ class ServiceOrderController extends Controller
         return view('customer.orders.index', compact('orders'));
     }
 
+
     public function create()
     {
         $customer = Customer::where('user_id', auth()->id())->first();
@@ -41,7 +45,9 @@ class ServiceOrderController extends Controller
                 ->with('warning', 'Silakan lengkapi nomor telepon terlebih dahulu sebelum membuat order service.');
         }
 
-        return view('customer.orders.create');
+        $services = Service::all();
+
+        return view('customer.orders.create', compact('services'));
     }
 
     public function store(Request $request)
@@ -50,6 +56,10 @@ class ServiceOrderController extends Controller
             'alamat_servis' => 'required',
             'tanggal_order' => 'required',
             'jadwal_servis' => 'required|date|after_or_equal:today',
+
+            'items' => 'required|array|min:1',
+            'items.*.service_id' => 'required|exists:services,id',
+            'items.*.qty' => 'required|integer|min:1',
         ]);
 
         $customer = Customer::where('user_id', auth()->id())->first();
@@ -57,15 +67,14 @@ class ServiceOrderController extends Controller
         if (!$customer) {
             return back()->with('error', 'Data customer tidak ditemukan');
         }
+
         if (empty($customer->telepon)) {
             return redirect()
                 ->route('customer.profile.edit')
                 ->with('warning', 'Silakan lengkapi nomor telepon terlebih dahulu sebelum membuat order service.');
         }
 
-        // Cek kuota harian
         if ($this->isKuotaPenuh($request->jadwal_servis)) {
-
             return back()
                 ->withInput()
                 ->withErrors([
@@ -73,33 +82,71 @@ class ServiceOrderController extends Controller
                 ]);
         }
 
-        $order = ServiceOrder::create([
-            'nomor_order' => ServiceOrder::generateKode(),
-            'customer_id' => $customer->id,
-            'tanggal_order' => $request->tanggal_order,
-            'jadwal_servis' => $request->jadwal_servis,
-            'alamat_servis' => $request->alamat_servis,
-            'keluhan' => $request->keluhan,
-            'status' => 'pending',
-            'subtotal_jasa' => 0,
-            'subtotal_sparepart' => 0,
-            'diskon' => 0,
-            'grand_total' => 0,
-        ]);
+        DB::transaction(function () use ($request, $customer) {
 
-        activity()
-            ->causedBy(auth()->user())
-            ->performedOn($order)
-            ->event('create')
-            ->withProperties([
-                'nomor_order' => $order->nomor_order,
+            // =========================
+            // CREATE ORDER
+            // =========================
+            $order = ServiceOrder::create([
+                'nomor_order' => ServiceOrder::generateKode(),
                 'customer_id' => $customer->id,
-                'jadwal_servis' => $order->jadwal_servis,
-                'alamat_servis' => $order->alamat_servis,
-                'ip' => $request->ip(),
-                'module' => 'Customer Order',
-            ])
-            ->log('Customer membuat order servis');
+                'tanggal_order' => $request->tanggal_order,
+                'jadwal_servis' => $request->jadwal_servis,
+                'alamat_servis' => $request->alamat_servis,
+                'keluhan' => $request->keluhan,
+                'status' => 'pending',
+                'subtotal_jasa' => 0,
+                'subtotal_sparepart' => 0,
+                'diskon' => 0,
+                'grand_total' => 0,
+            ]);
+
+            // =========================
+            // SIMPAN DETAIL LAYANAN
+            // =========================
+            $subtotalJasa = 0;
+
+            foreach ($request->items as $item) {
+
+                $service = Service::findOrFail($item['service_id']);
+
+                $subtotal = $service->harga * $item['qty'];
+
+                ServiceOrderDetail::create([
+                    'service_order_id' => $order->id,
+                    'service_id' => $service->id,
+                    'harga' => $service->harga,
+                    'qty' => $item['qty'],
+                    'subtotal' => $subtotal,
+                ]);
+
+                $subtotalJasa += $subtotal;
+            }
+
+            // =========================
+            // UPDATE TOTAL ORDER
+            // =========================
+            $order->update([
+                'subtotal_jasa' => $subtotalJasa,
+                'grand_total' => $subtotalJasa,
+            ]);
+
+            // =========================
+            // ACTIVITY LOG
+            // =========================
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($order)
+                ->event('create')
+                ->withProperties([
+                    'nomor_order' => $order->nomor_order,
+                    'customer_id' => $customer->id,
+                    'total' => $order->grand_total,
+                    'ip' => $request->ip(),
+                    'module' => 'Customer Order',
+                ])
+                ->log('Customer membuat order servis');
+        });
 
         return redirect()
             ->route('customer.orders')
@@ -129,13 +176,16 @@ class ServiceOrderController extends Controller
             ->where('customer_id', $customer->id)
             ->firstOrFail();
 
-        // optional: hanya boleh edit jika masih pending
         if ($order->status !== 'pending') {
             return redirect()->route('customer.orders')
                 ->with('error', 'Order tidak bisa diedit lagi');
         }
 
-        return view('customer.orders.edit', compact('order'));
+        $order->load('details.service');
+
+        $services = Service::all();
+
+        return view('customer.orders.edit', compact('order', 'services'));
     }
 
     public function update(Request $request, $id)
@@ -153,10 +203,12 @@ class ServiceOrderController extends Controller
         $request->validate([
             'alamat_servis' => 'required',
             'jadwal_servis' => 'required|date|after_or_equal:today',
-            'keluhan' => 'nullable',
+            'items' => 'required|array|min:1',
+            'items.*.service_id' => 'required|exists:services,id',
+            'items.*.qty' => 'required|integer|min:1',
         ]);
 
-        // hanya cek jika tanggal berubah
+        // cek kuota jika tanggal berubah
         if (
             $request->jadwal_servis != $order->jadwal_servis &&
             $this->isKuotaPenuh($request->jadwal_servis, $order->id)
@@ -168,34 +220,67 @@ class ServiceOrderController extends Controller
                 ]);
         }
 
-        $oldData = [
-            'alamat_servis' => $order->alamat_servis,
-            'jadwal_servis' => $order->jadwal_servis,
-            'keluhan' => $order->keluhan,
-        ];
+        DB::transaction(function () use ($request, $order, $customer) {
 
-        $order->update([
-            'alamat_servis' => $request->alamat_servis,
-            'jadwal_servis' => $request->jadwal_servis,
-            'keluhan' => $request->keluhan,
-        ]);
+            // =========================
+            // UPDATE ORDER
+            // =========================
+            $order->update([
+                'alamat_servis' => $request->alamat_servis,
+                'jadwal_servis' => $request->jadwal_servis,
+                'keluhan' => $request->keluhan,
+            ]);
 
-        activity()
-            ->causedBy(auth()->user())
-            ->performedOn($order)
-            ->event('update')
-            ->withProperties([
-                'nomor_order' => $order->nomor_order,
-                'old' => $oldData,
-                'new' => [
-                    'alamat_servis' => $order->alamat_servis,
-                    'jadwal_servis' => $order->jadwal_servis,
-                    'keluhan' => $order->keluhan,
-                ],
-                'ip' => $request->ip(),
-                'module' => 'Customer Order',
-            ])
-            ->log('Customer mengubah order servis');
+            // =========================
+            // HAPUS DETAIL LAMA
+            // =========================
+            $order->details()->delete();
+
+            // =========================
+            // INSERT DETAIL BARU
+            // =========================
+            $subtotalJasa = 0;
+
+            foreach ($request->items as $item) {
+
+                $service = Service::findOrFail($item['service_id']);
+
+                $subtotal = $service->harga * $item['qty'];
+
+                ServiceOrderDetail::create([
+                    'service_order_id' => $order->id,
+                    'service_id' => $service->id,
+                    'harga' => $service->harga,
+                    'qty' => $item['qty'],
+                    'subtotal' => $subtotal,
+                ]);
+
+                $subtotalJasa += $subtotal;
+            }
+
+            // =========================
+            // UPDATE TOTAL
+            // =========================
+            $order->update([
+                'subtotal_jasa' => $subtotalJasa,
+                'grand_total' => $subtotalJasa,
+            ]);
+
+            // =========================
+            // LOG
+            // =========================
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($order)
+                ->event('update')
+                ->withProperties([
+                    'nomor_order' => $order->nomor_order,
+                    'total' => $order->grand_total,
+                    'ip' => $request->ip(),
+                    'module' => 'Customer Order',
+                ])
+                ->log('Customer mengupdate order servis');
+        });
 
         return redirect()
             ->route('customer.orders')

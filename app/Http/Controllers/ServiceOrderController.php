@@ -302,93 +302,145 @@ class ServiceOrderController extends Controller
      */
     public function update(Request $request, ServiceOrder $serviceOrder)
     {
-        DB::transaction(function () use ($request, $serviceOrder) {
+        try {
 
-            $oldStatus = $serviceOrder->status;
+            DB::transaction(function () use ($request, $serviceOrder) {
 
-            // hapus detail lama
-            $serviceOrder->details()->delete();
 
-            $subtotalJasa = 0;
+                // ==================================
+                // VALIDASI FLOW STATUS
+                // ==================================
+                $oldStatus = $serviceOrder->status;
 
-            foreach ($request->items as $item) {
+                $newStatus = $request->status;
 
-                $service = Service::findOrFail(
-                    $item['service_id']
-                );
+                if ($oldStatus !== $newStatus) {
 
-                $lineSubtotal =
-                    $service->harga *
-                    $item['qty'];
+                    $statusFlow = [
+                        'pending' => ['dijadwalkan', 'dibatalkan'],
+                        'dijadwalkan' => ['proses', 'dibatalkan'],
+                        'proses' => ['selesai'],
+                        'selesai' => [],
+                        'dibatalkan' => [],
+                    ];
 
-                ServiceOrderDetail::create([
-                    'service_order_id' => $serviceOrder->id,
-                    'service_id' => $service->id,
-                    'harga' => $service->harga,
-                    'qty' => $item['qty'],
-                    'subtotal' => $lineSubtotal,
-                    'keterangan' => $item['keterangan'] ?? null,
+                    if (
+                        isset($statusFlow[$oldStatus]) &&
+                        !in_array($newStatus, $statusFlow[$oldStatus])
+                    ) {
+                        throw new \Exception('Perubahan status tidak valid.');
+                    }
+                }
+
+
+
+                // ==================================
+                // HAPUS DETAIL LAMA
+                // ==================================
+
+                $serviceOrder->details()->delete();
+
+                $subtotalJasa = 0;
+
+                foreach ($request->items as $item) {
+
+                    $service = Service::findOrFail(
+                        $item['service_id']
+                    );
+
+                    $lineSubtotal =
+                        $service->harga *
+                        $item['qty'];
+
+                    ServiceOrderDetail::create([
+                        'service_order_id' => $serviceOrder->id,
+                        'service_id' => $service->id,
+                        'harga' => $service->harga,
+                        'qty' => $item['qty'],
+                        'subtotal' => $lineSubtotal,
+                        'keterangan' => $item['keterangan'] ?? null,
+                    ]);
+
+                    $subtotalJasa += $lineSubtotal;
+                }
+
+                $subtotalSparepart =
+                    $request->subtotal_sparepart ?? 0;
+
+                $diskon =
+                    $request->diskon ?? 0;
+
+                $grandTotal =
+                    $subtotalJasa +
+                    $subtotalSparepart -
+                    $diskon;
+
+                // ==================================
+                // CEK DP SEBELUM PROSES
+                // ==================================
+
+                $invoice = $serviceOrder->invoice;
+
+                if ($request->status === 'proses') {
+
+                    if (!$invoice) {
+                        throw new \Exception('Invoice belum dibuat.');
+                    }
+
+                    $totalPaid = $invoice->payments()
+                        ->where('status', 'verified')
+                        ->sum('amount');
+
+                    $minDP = $invoice->total * 0.5;
+
+                    if ($totalPaid < $minDP) {
+                        throw new \Exception('Minimal DP 50% atau pelunasan penuh harus dilakukan sebelum proses.');
+                    }
+                }
+
+                // ==================================
+                // UPDATE SERVICE ORDER
+                // ==================================
+
+                $serviceOrder->update([
+                    'customer_id' => $request->customer_id,
+                    'technician_id' => $request->technician_id,
+                    'tanggal_order' => $request->tanggal_order,
+                    'jadwal_servis' => $request->jadwal_servis,
+                    'alamat_servis' => $request->alamat_servis,
+                    'keluhan' => $request->keluhan,
+                    'status' => $request->status,
+                    'diskon' => $diskon,
+                    'subtotal_jasa' => $subtotalJasa,
+                    'subtotal_sparepart' => $subtotalSparepart,
+                    'grand_total' => $grandTotal,
+                    'catatan' => $request->catatan,
                 ]);
 
-                $subtotalJasa += $lineSubtotal;
-            }
+                activity()
+                    ->causedBy(auth()->user())
+                    ->performedOn($serviceOrder)
+                    ->event('update')
+                    ->withProperties([
+                        'nomor_order' => $serviceOrder->nomor_order,
+                        'status_lama' => $oldStatus,
+                        'status_baru' => $request->status,
+                        'grand_total' => $grandTotal,
+                        'ip' => $request->ip(),
+                    ])
+                    ->log('Memperbarui order servis');
 
-            $subtotalSparepart =
-                $request->subtotal_sparepart ?? 0;
+                // ==================================
+                // AUTO CREATE INVOICE
+                // ==================================
 
-            $diskon =
-                $request->diskon ?? 0;
+                if (
+                    $oldStatus !== 'dijadwalkan' &&
+                    $request->status === 'dijadwalkan' &&
+                    !$serviceOrder->invoice
+                ) {
 
-            $grandTotal =
-                $subtotalJasa +
-                $subtotalSparepart -
-                $diskon;
-
-            $serviceOrder->update([
-                'customer_id' => $request->customer_id,
-                'technician_id' => $request->technician_id,
-                'tanggal_order' => $request->tanggal_order,
-                'jadwal_servis' => $request->jadwal_servis,
-                'alamat_servis' => $request->alamat_servis,
-                'keluhan' => $request->keluhan,
-
-                'status' => $request->status,
-
-                'diskon' => $diskon,
-
-                'subtotal_jasa' => $subtotalJasa,
-                'subtotal_sparepart' => $subtotalSparepart,
-                'grand_total' => $grandTotal,
-
-                'catatan' => $request->catatan,
-            ]);
-
-            activity()
-                ->causedBy(auth()->user())
-                ->performedOn($serviceOrder)
-                ->event('update')
-                ->withProperties([
-                    'nomor_order' => $serviceOrder->nomor_order,
-                    'status_lama' => $oldStatus,
-                    'status_baru' => $request->status,
-                    'grand_total' => $grandTotal,
-                    'ip' => $request->ip(),
-                ])
-                ->log('Memperbarui order servis');
-
-            // ==================================
-            // AUTO CREATE INVOICE
-            // ==================================
-
-            if (
-                $oldStatus !== 'selesai' &&
-                $request->status === 'selesai' &&
-                !$serviceOrder->invoice
-            ) {
-
-                try {
-
-                    $invoice =Invoice::create([
+                    $invoice = Invoice::create([
                         'nomor_invoice' => Invoice::generateNomor(),
                         'service_order_id' => $serviceOrder->id,
                         'tanggal_invoice' => now(),
@@ -407,21 +459,28 @@ class ServiceOrderController extends Controller
                             'nomor_order' => $serviceOrder->nomor_order,
                             'total' => $invoice->total,
                         ])
-                        ->log('Invoice otomatis dibuat karena order selesai');
-                        
-                } catch (\Exception $e) {
-
-                    dd($e->getMessage());
+                        ->log(
+                            'Invoice otomatis dibuat karena order dijadwalkan'
+                        );
                 }
-            }
-        });
+            });
 
-        return redirect()
-            ->route('admin.service-orders.index')
-            ->with(
-                'success',
-                'Order berhasil diperbarui'
-            );
+            return redirect()
+                ->route('admin.service-orders.index')
+                ->with(
+                    'success',
+                    'Order berhasil diperbarui'
+                );
+        } catch (\Exception $e) {
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with(
+                    'error',
+                    $e->getMessage()
+                );
+        }
     }
 
     /**
@@ -478,7 +537,7 @@ class ServiceOrderController extends Controller
         );
 
         return $pdf->stream(
-            'laporan-service-order.pdf'
+            'laporan-data-pemesanan.pdf'
         );
     }
 }

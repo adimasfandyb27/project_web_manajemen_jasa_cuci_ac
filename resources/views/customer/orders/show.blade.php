@@ -258,6 +258,47 @@
 
     </div>
 
+    <!-- DETAIL LAYANAN -->
+    <div class="bg-white rounded-3xl p-6 shadow-sm border mt-6">
+
+        <h3 class="font-bold text-gray-800 mb-4">
+            🧾 Detail Layanan
+        </h3>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+
+                <thead>
+                    <tr class="text-left border-b">
+                        <th class="py-2">Layanan</th>
+                        <th>Qty</th>
+                        <th>Harga</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach ($order->details as $detail)
+                        <tr class="border-b">
+                            <td class="py-2">
+                                {{ $detail->service->nama_layanan }}
+                            </td>
+                            <td>{{ $detail->qty }}</td>
+                            <td>
+                                Rp {{ number_format($detail->harga, 0, ',', '.') }}
+                            </td>
+                            <td class="font-semibold text-emerald-600">
+                                Rp {{ number_format($detail->subtotal, 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+
     <!-- TECHNICIAN -->
     <div class="bg-white rounded-3xl p-6 shadow-sm border hover:shadow-lg transition mt-6">
 

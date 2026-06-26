@@ -67,18 +67,30 @@ class InvoiceController extends Controller
 
             ->addColumn('status_badge', function ($row) {
 
+                $totalPaid = $row->payments()
+                    ->where('status', 'verified')
+                    ->sum('amount');
+
                 if ($row->status == 'lunas') {
 
                     return '
-                <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                    Lunas
-                </span>';
+        <span class="px-3 py-1 rounded-full bg-green-100 text-green-700">
+            Lunas
+        </span>';
+                }
+
+                if ($totalPaid > 0) {
+
+                    return '
+        <span class="px-3 py-1 rounded-full bg-orange-100 text-orange-700">
+            DP Dibayar
+        </span>';
                 }
 
                 return '
-            <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">
-                Belum Bayar
-            </span>';
+    <span class="px-3 py-1 rounded-full bg-red-100 text-red-700">
+        Belum Bayar
+    </span>';
             })
 
             ->addColumn('aksi', function ($row) {
@@ -94,28 +106,28 @@ class InvoiceController extends Controller
     ';
 
                 // tombol lunas / upload bukti
-                if ($row->status == 'belum_bayar') {
+        //         if ($row->status == 'belum_bayar') {
 
-                    $buttons .= '
-        <button
-            type="button"
-            data-id="' . $row->id . '"
-            class="btn-lunas px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition">
+        //             $buttons .= '
+        // <button
+        //     type="button"
+        //     data-id="' . $row->id . '"
+        //     class="btn-lunas px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition">
 
-            Lunas
-        </button>
-        ';
-                }
+        //     Lunas
+        // </button>
+        // ';
+        //         }
 
                 // kalau sudah lunas (opsional: tampilkan badge)
-                if ($row->status == 'lunas') {
+        //         if ($row->status == 'lunas') {
 
-                    $buttons .= '
-        <span class="px-3 py-2 rounded-lg bg-green-100 text-green-700 text-xs font-semibold">
-            Sudah Lunas
-        </span>
-        ';
-                }
+        //             $buttons .= '
+        // <span class="px-3 py-2 rounded-lg bg-green-100 text-green-700 text-xs font-semibold">
+        //     Sudah Lunas
+        // </span>
+        // ';
+        //         }
 
                 $buttons .= '</div>';
 
@@ -133,11 +145,31 @@ class InvoiceController extends Controller
     public function show(Invoice $invoice)
     {
         $invoice->load([
+            'payments',
             'serviceOrder.customer',
             'serviceOrder.technician',
+            'serviceOrder.details.service'
         ]);
 
-        return view('admin.invoices.show', compact('invoice'));
+        $pendingPayment = $invoice->payments
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        $totalPaid = $invoice->payments
+            ->where('status', 'verified')
+            ->sum('amount');
+
+        $remaining = $invoice->total - $totalPaid;
+
+        return view(
+            'admin.invoices.show',
+            compact(
+                'invoice',
+                'pendingPayment',
+                'totalPaid',
+                'remaining'
+            )
+        );
     }
 
     public function edit(Invoice $invoice)

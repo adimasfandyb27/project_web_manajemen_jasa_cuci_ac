@@ -27,21 +27,23 @@ class Invoice extends Model
         return $this->belongsTo(ServiceOrder::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public static function generateNomor()
     {
         $tanggal = now()->format('Ymd');
 
-        $lastInvoice = self::where(
-            'nomor_invoice',
-            'like',
-            'INV-NS-' . $tanggal . '-%'
-        )
-            ->orderByDesc('id')
-            ->first();
+        $lastInvoice = self::orderByDesc('id')->first();
 
-        $nomor = $lastInvoice
-            ? ((int) substr($lastInvoice->nomor_invoice, -4)) + 1
-            : 1;
+        if ($lastInvoice) {
+            $parts = explode('-', $lastInvoice->nomor_invoice);
+            $nomor = ((int) end($parts)) + 1;
+        } else {
+            $nomor = 1;
+        }
 
         return 'INV-NS-' . $tanggal . '-' .
             str_pad($nomor, 4, '0', STR_PAD_LEFT);
