@@ -32,7 +32,7 @@ class Customer extends Model
             ? ((int) substr($lastCustomer->kode_customer, 3)) + 1
             : 1;
 
-        return 'CUS' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+        return 'CUS'.str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
 
     public function serviceOrders()
@@ -43,5 +43,10 @@ class Customer extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function acUnits()
+    {
+        return $this->hasMany(customer_ac_units::class);
     }
 }

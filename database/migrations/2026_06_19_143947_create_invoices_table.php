@@ -31,7 +31,7 @@ return new class extends Migration
                 'draft',
                 'belum_bayar',
                 'bayar_sebagian',
-                'lunas'
+                'lunas',
             ])->default('draft');
 
             $table->timestamps();

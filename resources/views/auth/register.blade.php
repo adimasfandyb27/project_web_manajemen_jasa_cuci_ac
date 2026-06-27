@@ -1,142 +1,187 @@
 <x-guest-layout>
     <div class="min-h-screen flex">
 
-        <!-- LEFT SIDE (SaaS HERO - SAME AS LOGIN) -->
-        <div
-            class="hidden lg:flex w-1/2 bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 relative overflow-hidden">
+        <x-auth-hero />
 
-            <!-- depth layer -->
-            <div class="absolute inset-0 bg-black/5"></div>
-
-            <!-- blur decorations -->
-            <div class="absolute w-96 h-96 bg-white/10 rounded-full -top-20 -left-20 blur-3xl"></div>
-            <div class="absolute w-96 h-96 bg-white/10 rounded-full bottom-0 right-0 blur-3xl"></div>
-
-            <!-- CENTER WRAPPER -->
-            <div
-                class="relative z-10 flex flex-col items-center justify-center text-center px-12 text-white w-full h-full">
-
-                <!-- LOGO -->
-                <div class="mb-8">
-                    <div
-                        class="w-28 h-28 bg-white/15 backdrop-blur-xl rounded-3xl flex items-center justify-center shadow-2xl ring-1 ring-white/30 mx-auto">
-                        <img src="{{ asset('img/logo.png') }}" class="w-16 h-16 object-contain" alt="Logo">
-                    </div>
-                </div>
-
-                <!-- TITLE -->
-                <h1 class="text-4xl font-bold tracking-tight leading-tight">
-                    Service Management System
-                </h1>
-
-                <!-- SUBTITLE -->
-                <p class="mt-4 text-white/80 text-sm max-w-md leading-relaxed">
-                    Kelola layanan, pelanggan, invoice, dan laporan dalam satu dashboard modern yang cepat, rapi, dan efisien.
-                </p>
-
-                <!-- FEATURE PILLS -->
-                <div class="mt-10 flex gap-3 flex-wrap justify-center">
-
-                    <div class="px-4 py-2 bg-white/15 rounded-full text-xs backdrop-blur-md border border-white/20">
-                        ⚡ Fast
-                    </div>
-
-                    <div class="px-4 py-2 bg-white/15 rounded-full text-xs backdrop-blur-md border border-white/20">
-                        🔒 Secure
-                    </div>
-
-                    <div class="px-4 py-2 bg-white/15 rounded-full text-xs backdrop-blur-md border border-white/20">
-                        🎯 Simple
-                    </div>
-
-                </div>
-
-            </div>
-        </div>
-
-        <!-- RIGHT SIDE (REGISTER FORM) -->
-        <div class="w-full lg:w-1/2 flex items-center justify-center bg-gray-50 px-6 py-12">
+        <div class="w-full lg:w-1/2 flex items-center justify-center bg-gradient-to-br from-slate-50 to-white px-6 py-12">
 
             <div class="w-full max-w-md">
 
-                <!-- CARD -->
                 <div class="bg-white shadow-xl rounded-2xl border border-gray-100 p-8">
 
-                    <!-- HEADER -->
                     <div class="mb-6 text-center">
-                        <h2 class="text-2xl font-bold text-gray-800 tracking-tight">
-                            Create Account
-                        </h2>
-                        <p class="text-sm text-gray-500 mt-1">
-                            Start your journey with us today
-                        </p>
+                        <h2 class="text-2xl font-bold text-gray-800 tracking-tight">Create Account</h2>
+                        <p class="text-sm text-gray-500 mt-1">Start your journey with us today</p>
                     </div>
 
-                    <!-- FORM -->
-                    <form method="POST" action="{{ route('register') }}" class="space-y-5">
+                    <form method="POST" action="{{ route('register') }}" class="space-y-5" x-data="registerForm()" x-on:submit="loading = true">
                         @csrf
 
-                        <!-- NAME -->
                         <div>
-                            <x-input-label for="name" :value="__('Name')" />
-                            <x-text-input id="name"
-                                class="block mt-1 w-full rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm"
-                                type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
+                            <x-input-label for="name" :value="__('Full Name')" />
+                            <div class="relative mt-1">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                </div>
+                                <input id="name" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" placeholder="Enter your full name"
+                                    class="block w-full pl-11 pr-4 py-2.5 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm placeholder:text-gray-400" />
+                            </div>
                             <x-input-error :messages="$errors->get('name')" class="mt-2" />
                         </div>
 
-                        <!-- EMAIL -->
                         <div>
                             <x-input-label for="email" :value="__('Email')" />
-                            <x-text-input id="email"
-                                class="block mt-1 w-full rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm"
-                                type="email" name="email" :value="old('email')" required autocomplete="username" />
+                            <div class="relative mt-1">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                </div>
+                                <input id="email" type="email" name="email" :value="old('email')" required autocomplete="username" placeholder="Enter your email"
+                                    class="block w-full pl-11 pr-4 py-2.5 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm placeholder:text-gray-400" />
+                            </div>
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
 
-                        <!-- PASSWORD -->
+                        <div>
+                            <x-input-label for="telepon" :value="__('Phone Number')" />
+                            <div class="relative mt-1">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                </div>
+                                <input id="telepon" type="text" name="telepon" :value="old('telepon')" placeholder="Enter your phone number"
+                                    class="block w-full pl-11 pr-4 py-2.5 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm placeholder:text-gray-400" />
+                            </div>
+                            <x-input-error :messages="$errors->get('telepon')" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="alamat" :value="__('Address')" />
+                            <div class="relative mt-1">
+                                <div class="absolute top-3 left-0 pl-3.5 flex items-start pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                </div>
+                                <textarea id="alamat" name="alamat" rows="3" placeholder="Enter your address"
+                                    class="block w-full pl-11 pr-4 py-2.5 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm placeholder:text-gray-400 resize-none">{{ old('alamat') }}</textarea>
+                            </div>
+                            <x-input-error :messages="$errors->get('alamat')" class="mt-2" />
+                        </div>
+
                         <div>
                             <x-input-label for="password" :value="__('Password')" />
-                            <x-text-input id="password"
-                                class="block mt-1 w-full rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm"
-                                type="password" name="password" required autocomplete="new-password" />
+                            <div class="relative mt-1">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                </div>
+                                <input x-model="password" :type="showPassword ? 'text' : 'password'" id="password" name="password" required autocomplete="new-password" placeholder="Create a password"
+                                    class="block w-full pl-11 pr-12 py-2.5 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm placeholder:text-gray-400" />
+                                <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 pr-3.5 flex items-center">
+                                    <svg x-show="!showPassword" class="w-5 h-5 text-gray-400 hover:text-gray-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    <svg x-show="showPassword" class="w-5 h-5 text-gray-400 hover:text-gray-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                </button>
+                            </div>
+                            <div x-show="password.length > 0" class="mt-2" x-cloak>
+                                <div class="h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                                    <div class="h-1.5 rounded-full transition-all duration-300" :style="'width: ' + passwordStrength + '%'" :class="passwordStrengthClass"></div>
+                                </div>
+                                <p class="text-xs mt-1" :class="passwordStrengthTextClass" x-text="passwordStrengthLabel"></p>
+                            </div>
                             <x-input-error :messages="$errors->get('password')" class="mt-2" />
                         </div>
 
-                        <!-- CONFIRM PASSWORD -->
                         <div>
                             <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-                            <x-text-input id="password_confirmation"
-                                class="block mt-1 w-full rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm"
-                                type="password" name="password_confirmation" required autocomplete="new-password" />
+                            <div class="relative mt-1">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                </div>
+                                <input :type="showConfirmPassword ? 'text' : 'password'" id="password_confirmation" name="password_confirmation" required autocomplete="new-password" placeholder="Confirm your password"
+                                    class="block w-full pl-11 pr-12 py-2.5 rounded-xl border-gray-200 focus:border-emerald-500 focus:ring-emerald-500 shadow-sm placeholder:text-gray-400" />
+                                <button type="button" @click="showConfirmPassword = !showConfirmPassword" class="absolute inset-y-0 right-0 pr-3.5 flex items-center">
+                                    <svg x-show="!showConfirmPassword" class="w-5 h-5 text-gray-400 hover:text-gray-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    <svg x-show="showConfirmPassword" class="w-5 h-5 text-gray-400 hover:text-gray-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                </button>
+                            </div>
                             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
                         </div>
 
-                        <!-- FOOTER ACTION -->
-                        <div class="flex items-center justify-between text-sm">
-                            <a class="text-gray-500 hover:text-gray-700 transition"
-                                href="{{ route('login') }}">
-                                Already have an account?
-                            </a>
+                        <div>
+                            <label class="inline-flex items-start gap-2.5">
+                                <input type="checkbox" x-model="terms" name="terms" required
+                                    class="mt-0.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                                <span class="text-sm text-gray-600 leading-relaxed">
+                                    I agree to the
+                                    <a href="#" class="text-emerald-600 hover:text-emerald-700 font-medium transition">Terms & Conditions</a>
+                                    and
+                                    <a href="#" class="text-emerald-600 hover:text-emerald-700 font-medium transition">Privacy Policy</a>
+                                </span>
+                            </label>
+                            <x-input-error :messages="$errors->get('terms')" class="mt-2" />
                         </div>
 
-                        <!-- BUTTON -->
-                        <x-primary-button
-                            class="w-full justify-center py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 transition shadow-md">
-                            {{ __('Register') }}
-                        </x-primary-button>
+                        <button type="submit" :disabled="loading || !terms"
+                            class="w-full flex items-center justify-center py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition shadow-md text-white font-semibold">
+                            <span x-show="!loading" class="flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                                {{ __('Create Account') }}
+                            </span>
+                            <span x-show="loading" class="flex items-center gap-2">
+                                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+                                Creating account...
+                            </span>
+                        </button>
 
                     </form>
 
                 </div>
 
-                <!-- FOOTER -->
-                <p class="text-center text-xs text-gray-400 mt-6">
-                    © {{ date('Y') }} Service Management System. All rights reserved.
+                <p class="text-center text-sm text-gray-500 mt-6">
+                    Already have an account?
+                    <a href="{{ route('login') }}" class="text-emerald-600 hover:text-emerald-700 font-semibold transition">Sign in</a>
+                </p>
+
+                <p class="text-center text-xs text-gray-400 mt-3">
+                    &copy; {{ date('Y') }} Service Management System. All rights reserved.
                 </p>
 
             </div>
         </div>
 
     </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('registerForm', () => ({
+                loading: false,
+                showPassword: false,
+                showConfirmPassword: false,
+                password: '',
+                terms: false,
+                get passwordStrength() {
+                    let s = 0;
+                    if (this.password.length >= 8) s += 25;
+                    if (/[a-z]/.test(this.password) && /[A-Z]/.test(this.password)) s += 25;
+                    if (/\d/.test(this.password)) s += 25;
+                    if (/[^a-zA-Z0-9]/.test(this.password)) s += 25;
+                    return s;
+                },
+                get passwordStrengthClass() {
+                    if (this.passwordStrength <= 25) return 'bg-red-500';
+                    if (this.passwordStrength <= 50) return 'bg-orange-500';
+                    if (this.passwordStrength <= 75) return 'bg-yellow-500';
+                    return 'bg-emerald-500';
+                },
+                get passwordStrengthTextClass() {
+                    if (this.passwordStrength <= 25) return 'text-red-600';
+                    if (this.passwordStrength <= 50) return 'text-orange-600';
+                    if (this.passwordStrength <= 75) return 'text-yellow-600';
+                    return 'text-emerald-600';
+                },
+                get passwordStrengthLabel() {
+                    if (this.passwordStrength <= 25) return 'Weak';
+                    if (this.passwordStrength <= 50) return 'Fair';
+                    if (this.passwordStrength <= 75) return 'Good';
+                    return 'Strong';
+                }
+            }));
+        });
+    </script>
 </x-guest-layout>

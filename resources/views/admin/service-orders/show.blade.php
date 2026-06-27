@@ -214,6 +214,7 @@
                     <thead class="bg-emerald-50 text-emerald-700 uppercase text-xs tracking-wider">
                         <tr>
                             <th class="text-left p-3">Layanan</th>
+                            <th class="text-left p-3">Unit AC</th>
                             <th class="text-left p-3">Harga</th>
                             <th class="text-left p-3">Qty</th>
                             <th class="text-left p-3">Subtotal</th>
@@ -227,6 +228,16 @@
 
                                 <td class="p-3 font-medium text-gray-800 hover:bg-emerald-50/50 transition">
                                     {{ $detail->service->nama_layanan ?? '-' }}
+                                </td>
+
+                                <td class="p-3 text-gray-600 hover:bg-emerald-50/50 transition">
+                                    @if ($detail->acUnit)
+                                        {{ $detail->acUnit->brand->nama ?? '-' }}
+                                        - {{ $detail->acUnit->type->nama ?? '-' }}
+                                        ({{ $detail->acUnit->capacity->label ?? '-' }})
+                                    @else
+                                        <span class="text-gray-400">-</span>
+                                    @endif
                                 </td>
 
                                 <td class="p-3 text-gray-600 hover:bg-emerald-50/50 transition">

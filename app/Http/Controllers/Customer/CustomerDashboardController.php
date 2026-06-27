@@ -12,7 +12,7 @@ class CustomerDashboardController extends Controller
     {
         $customer = Customer::where('user_id', auth()->id())->first();
 
-        if (!$customer) {
+        if (! $customer) {
             return view('customer.dashboard', [
                 'totalOrders' => 0,
                 'pendingOrders' => 0,

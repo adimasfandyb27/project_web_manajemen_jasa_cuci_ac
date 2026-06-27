@@ -131,7 +131,7 @@
                                 Customer
                             </label>
 
-                            <select name="customer_id"
+                            <select name="customer_id" x-model="customer_id"
                                 class="w-full h-12
                                rounded-xl
                                border border-gray-200
@@ -326,6 +326,7 @@ hover:shadow-lg transition-all duration-300 p-6">
                         <thead class="bg-emerald-50 text-emerald-700 uppercase text-xs tracking-wider">
                             <tr class="hover:bg-emerald-50/50 transition">
                                 <th class="p-3 text-left">Layanan</th>
+                                <th class="p-3 text-left">Unit AC</th>
                                 <th class="p-3 text-left">Harga</th>
                                 <th class="p-3 text-left">Qty</th>
                                 <th class="p-3 text-left">Subtotal</th>
@@ -352,6 +353,14 @@ hover:shadow-lg transition-all duration-300 p-6">
                                                 </option>
                                             @endforeach
 
+                                        </select>
+                                    </td>
+
+                                    <td class="p-3 min-w-[200px]">
+                                        <select :name="'items[' + index + '][customer_ac_unit_id]'"
+                                            class="w-full rounded-lg border-gray-200 px-2 py-1"
+                                            x-init="initAcUnitSelect($el, index)"
+                                            x-model="item.customer_ac_unit_id">
                                         </select>
                                     </td>
 
@@ -570,15 +579,43 @@ hover:shadow-lg transition-all duration-300 p-6">
             return {
 
                 services: @json($services),
+                allAcUnits: @json($acUnits),
+                customer_id: {{ $serviceOrder->customer_id }},
 
                 diskon: {{ old('diskon', $serviceOrder->diskon ?? 0) }},
                 subtotal_sparepart: {{ old('subtotal_sparepart', $serviceOrder->subtotal_sparepart ?? 0) }},
 
                 items: @json($items),
 
+                get availableAcUnits() {
+                    if (!this.customer_id) return [];
+                    return this.allAcUnits.filter(u => u.customer_id == this.customer_id);
+                },
+
+                initAcUnitSelect(el, index) {
+                    const render = () => {
+                        const units = this.availableAcUnits;
+                        const currentVal = this.items[index].customer_ac_unit_id;
+                        let html = '<option value="">Pilih Unit AC</option>';
+                        units.forEach(u => {
+                            html += '<option value="' + u.id + '">' + u.label + '</option>';
+                        });
+                        el.innerHTML = html;
+                        if (currentVal && units.some(u => u.id == currentVal)) {
+                            el.value = currentVal;
+                        } else {
+                            el.value = '';
+                            this.items[index].customer_ac_unit_id = '';
+                        }
+                    };
+                    this.$watch('customer_id', render);
+                    render();
+                },
+
                 addRow() {
                     this.items.push({
                         service_id: '',
+                        customer_ac_unit_id: '',
                         harga: 0,
                         qty: 1,
                         subtotal: 0,

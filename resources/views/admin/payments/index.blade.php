@@ -338,24 +338,28 @@
                         },
 
                         {
-                            data: 'invoice_number'
+                            data: 'invoice_number',
+                            name: 'invoices.nomor_invoice'
                         },
 
                         {
-                            data: 'customer'
+                            data: 'customer',
+                            name: 'customers.nama'
                         },
 
                         {
-                            data: 'payment_type'
+                            data: 'payment_type',
+                            name: 'payments.payment_type'
                         },
 
                         {
                             data: 'amount_rupiah',
-                            className: 'text-right font-semibold'
+                            name: 'payments.amount'
                         },
 
                         {
-                            data: 'payment_method'
+                            data: 'payment_method',
+                            name: 'payments.payment_method'
                         },
 
                         {
@@ -371,14 +375,14 @@
                         },
 
                         {
-                            data: 'paid_at'
+                            data: 'paid_at',
+                            name: 'payments.paid_at'
                         },
 
                         {
                             data: 'aksi',
                             searchable: false,
-                            orderable: false,
-                            className: 'text-center'
+                            orderable: false
                         }
 
                     ]
@@ -410,6 +414,7 @@
                     updateExportLink();
 
                 });
+
 
                 // ==========================
                 // UPDATE EXPORT LINK

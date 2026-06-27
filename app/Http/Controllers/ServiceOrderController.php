@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\customer_ac_units;
+use App\Models\CustomerNotification;
 use App\Models\Invoice;
 use App\Models\Service;
 use App\Models\ServiceOrder;
 use App\Models\ServiceOrderDetail;
 use App\Models\Technician;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
@@ -24,7 +27,7 @@ class ServiceOrderController extends Controller
 
             $query = ServiceOrder::with([
                 'customer',
-                'technician'
+                'technician',
             ]);
 
             if ($request->filled('tanggal_dari')) {
@@ -57,38 +60,33 @@ class ServiceOrderController extends Controller
 
                 ->editColumn('tanggal_order', function ($row) {
                     return $row->tanggal_order
-                        ? \Carbon\Carbon::parse($row->tanggal_order)->format('d/m/Y')
+                        ? Carbon::parse($row->tanggal_order)->format('d/m/Y')
                         : '-';
                 })
 
                 ->editColumn('jadwal_servis', function ($row) {
                     return $row->jadwal_servis
-                        ? \Carbon\Carbon::parse($row->jadwal_servis)->format('d/m/Y')
+                        ? Carbon::parse($row->jadwal_servis)->format('d/m/Y')
                         : '-';
                 })
 
                 ->editColumn('grand_total', function ($row) {
-                    return 'Rp ' . number_format($row->grand_total, 0, ',', '.');
+                    return 'Rp '.number_format($row->grand_total, 0, ',', '.');
                 })
 
                 ->addColumn('status_badge', function ($row) {
 
                     return match ($row->status) {
 
-                        'pending' =>
-                        '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Pending</span>',
+                        'pending' => '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Pending</span>',
 
-                        'dijadwalkan' =>
-                        '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Dijadwalkan</span>',
+                        'dijadwalkan' => '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Dijadwalkan</span>',
 
-                        'proses' =>
-                        '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">Proses</span>',
+                        'proses' => '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">Proses</span>',
 
-                        'selesai' =>
-                        '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Selesai</span>',
+                        'selesai' => '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Selesai</span>',
 
-                        'dibatalkan' =>
-                        '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Dibatalkan</span>',
+                        'dibatalkan' => '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Dibatalkan</span>',
 
                         default => '-',
                     };
@@ -117,21 +115,21 @@ class ServiceOrderController extends Controller
                 // })
                 ->addColumn('aksi', function ($row) {
                     return [
-                        'id' => $row->id
+                        'id' => $row->id,
                     ];
                 })
 
                 ->rawColumns([
                     'status_badge',
-                    'aksi'
+                    'aksi',
                 ])
 
                 ->make(true);
         }
 
         return view('admin.service-orders.index', [
-            'totalOrder'   => ServiceOrder::count(),
-            'totalProses'  => ServiceOrder::where('status', 'proses')->count(),
+            'totalOrder' => ServiceOrder::count(),
+            'totalProses' => ServiceOrder::where('status', 'proses')->count(),
             'totalSelesai' => ServiceOrder::where('status', 'selesai')->count(),
         ]);
     }
@@ -148,11 +146,22 @@ class ServiceOrderController extends Controller
             ->get();
         $services = Service::orderBy('nama_layanan')->get();
 
+        $acUnits = customer_ac_units::withTrashed()
+            ->with(['brand', 'type', 'capacity'])->get()->map(function ($u) {
+                return [
+                    'id' => $u->id,
+                    'customer_id' => $u->customer_id,
+                    'label' => ($u->brand?->nama ?? '-').' - '.($u->type?->nama ?? '-').' ('.($u->capacity?->label ?? '-').')',
+                ];
+            })->values();
+
         $kode_layanan = ServiceOrder::generateKode();
+
         return view('admin.service-orders.create', compact(
             'customers',
             'technicians',
             'services',
+            'acUnits',
             'kode_layanan'
         ));
     }
@@ -168,6 +177,11 @@ class ServiceOrderController extends Controller
             'alamat_servis' => 'required',
             'items' => 'required|array|min:1',
         ]);
+
+        if ($request->filled('technician_id') && $request->filled('jadwal_servis')) {
+            $this->checkScheduleConflict($request->technician_id, $request->jadwal_servis, null);
+            $this->checkDailyLimit($request->technician_id, $request->jadwal_servis, null);
+        }
 
         DB::transaction(function () use ($request) {
 
@@ -202,6 +216,7 @@ class ServiceOrderController extends Controller
 
                 ServiceOrderDetail::create([
                     'service_order_id' => $order->id,
+                    'customer_ac_unit_id' => $item['customer_ac_unit_id'] ?? null,
                     'service_id' => $service->id,
                     'harga' => $service->harga,
                     'qty' => $qty,
@@ -253,7 +268,11 @@ class ServiceOrderController extends Controller
         $serviceOrder->load([
             'customer',
             'technician',
-            'details.service'
+            'details.service',
+            'details.acUnit',
+            'details.acUnit.brand',
+            'details.acUnit.type',
+            'details.acUnit.capacity',
         ]);
 
         return view(
@@ -275,13 +294,22 @@ class ServiceOrderController extends Controller
             ->get();
         $services = Service::all();
 
-        // dd($serviceOrder->details->toArray());
+        $acUnits = customer_ac_units::withTrashed()
+            ->with(['brand', 'type', 'capacity'])->get()->map(function ($u) {
+                return [
+                    'id' => $u->id,
+                    'customer_id' => $u->customer_id,
+                    'label' => ($u->brand?->nama ?? '-').' - '.($u->type?->nama ?? '-').' ('.($u->capacity?->label ?? '-').')',
+                ];
+            })->values();
+
         $items = $serviceOrder->details->map(function ($detail) {
             return [
                 'service_id' => $detail->service_id,
-                'harga'      => $detail->harga,
-                'qty'        => $detail->qty,
-                'subtotal'   => $detail->subtotal,
+                'customer_ac_unit_id' => $detail->customer_ac_unit_id,
+                'harga' => $detail->harga,
+                'qty' => $detail->qty,
+                'subtotal' => $detail->subtotal,
             ];
         })->values();
 
@@ -292,6 +320,7 @@ class ServiceOrderController extends Controller
                 'customers',
                 'technicians',
                 'services',
+                'acUnits',
                 'items'
             )
         );
@@ -304,8 +333,12 @@ class ServiceOrderController extends Controller
     {
         try {
 
-            DB::transaction(function () use ($request, $serviceOrder) {
+            if ($request->filled('technician_id') && $request->filled('jadwal_servis')) {
+                $this->checkScheduleConflict($request->technician_id, $request->jadwal_servis, $serviceOrder->id);
+                $this->checkDailyLimit($request->technician_id, $request->jadwal_servis, $serviceOrder->id);
+            }
 
+            DB::transaction(function () use ($request, $serviceOrder) {
 
                 // ==================================
                 // VALIDASI FLOW STATUS
@@ -326,13 +359,11 @@ class ServiceOrderController extends Controller
 
                     if (
                         isset($statusFlow[$oldStatus]) &&
-                        !in_array($newStatus, $statusFlow[$oldStatus])
+                        ! in_array($newStatus, $statusFlow[$oldStatus])
                     ) {
                         throw new \Exception('Perubahan status tidak valid.');
                     }
                 }
-
-
 
                 // ==================================
                 // HAPUS DETAIL LAMA
@@ -354,6 +385,7 @@ class ServiceOrderController extends Controller
 
                     ServiceOrderDetail::create([
                         'service_order_id' => $serviceOrder->id,
+                        'customer_ac_unit_id' => $item['customer_ac_unit_id'] ?? null,
                         'service_id' => $service->id,
                         'harga' => $service->harga,
                         'qty' => $item['qty'],
@@ -383,7 +415,7 @@ class ServiceOrderController extends Controller
 
                 if ($request->status === 'proses') {
 
-                    if (!$invoice) {
+                    if (! $invoice) {
                         throw new \Exception('Invoice belum dibuat.');
                     }
 
@@ -431,13 +463,38 @@ class ServiceOrderController extends Controller
                     ->log('Memperbarui order servis');
 
                 // ==================================
+                // NOTIFIKASI KE CUSTOMER
+                // ==================================
+
+                if ($oldStatus !== $newStatus) {
+                    $customer = $serviceOrder->customer;
+                    if ($customer) {
+                        $statusLabels = [
+                            'dijadwalkan' => 'Dijadwalkan',
+                            'proses' => 'Sedang Diproses',
+                            'selesai' => 'Selesai',
+                            'dibatalkan' => 'Dibatalkan',
+                        ];
+                        $label = $statusLabels[$newStatus] ?? $newStatus;
+                        CustomerNotification::createForCustomer(
+                            $customer->id,
+                            "Status Order #{$serviceOrder->nomor_order}",
+                            "Status order Anda telah berubah menjadi: {$label}",
+                            'order_status',
+                            $serviceOrder->id,
+                            ServiceOrder::class
+                        );
+                    }
+                }
+
+                // ==================================
                 // AUTO CREATE INVOICE
                 // ==================================
 
                 if (
                     $oldStatus !== 'dijadwalkan' &&
                     $request->status === 'dijadwalkan' &&
-                    !$serviceOrder->invoice
+                    ! $serviceOrder->invoice
                 ) {
 
                     $invoice = Invoice::create([
@@ -508,7 +565,7 @@ class ServiceOrderController extends Controller
     {
         $query = ServiceOrder::with([
             'customer',
-            'technician'
+            'technician',
         ])->latest();
 
         if ($request->filled('tanggal_dari')) {
@@ -539,5 +596,46 @@ class ServiceOrderController extends Controller
         return $pdf->stream(
             'laporan-data-pemesanan.pdf'
         );
+    }
+
+    private function checkScheduleConflict($technicianId, $jadwalServis, $excludeId)
+    {
+        $jadwal = Carbon::parse($jadwalServis);
+        $start = $jadwal->copy()->subHours(2);
+        $end = $jadwal->copy()->addHours(2);
+
+        $query = ServiceOrder::where('technician_id', $technicianId)
+            ->where('jadwal_servis', '>=', $start)
+            ->where('jadwal_servis', '<=', $end)
+            ->whereNotIn('status', ['dibatalkan', 'selesai']);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        $conflict = $query->exists();
+
+        if ($conflict) {
+            throw new \Exception('Teknisi sudah memiliki jadwal dalam rentang 2 jam dari jadwal yang dipilih.');
+        }
+    }
+
+    private function checkDailyLimit($technicianId, $jadwalServis, $excludeId)
+    {
+        $date = Carbon::parse($jadwalServis)->format('Y-m-d');
+
+        $query = ServiceOrder::where('technician_id', $technicianId)
+            ->whereDate('jadwal_servis', $date)
+            ->whereNotIn('status', ['dibatalkan', 'selesai']);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        $count = $query->count();
+
+        if ($count >= 5) {
+            throw new \Exception('Teknisi sudah memiliki 5 jadwal pada tanggal ini. Batas harian tercapai.');
+        }
     }
 }

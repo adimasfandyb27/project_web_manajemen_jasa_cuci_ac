@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Invoice;
+use Illuminate\Support\Facades\Auth;
 
 class CustomerInvoiceController extends Controller
 {
@@ -24,7 +24,10 @@ class CustomerInvoiceController extends Controller
         $invoice = Invoice::with([
             'serviceOrder.customer',
             'serviceOrder.details.service',
-            'payments'
+            'serviceOrder.details.acUnit.brand',
+            'serviceOrder.details.acUnit.type',
+            'serviceOrder.details.acUnit.capacity',
+            'payments',
         ])
             ->where('id', $id)
             ->whereHas('serviceOrder.customer', function ($q) {

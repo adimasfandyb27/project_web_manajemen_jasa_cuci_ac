@@ -202,6 +202,49 @@
 
             </div>
 
+            {{-- ANALYTICS --}}
+            <div class="grid md:grid-cols-3 gap-5">
+
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-4">
+                        <span class="text-3xl">⏱️</span>
+                        <div>
+                            <p class="text-gray-500 text-sm">Rata-rata Waktu Servis</p>
+                            <h3 class="text-xl font-bold mt-1">
+                                {{ $avgCompletionTime ? round($avgCompletionTime, 1) . ' jam' : 'N/A' }}
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-4">
+                        <span class="text-3xl">🏆</span>
+                        <div>
+                            <p class="text-gray-500 text-sm">Teknisi Terbaik</p>
+                            <h3 class="text-xl font-bold mt-1">
+                                {{ $bestTechnician?->nama ?? 'N/A' }}
+                            </h3>
+                            <p class="text-xs text-emerald-600">{{ $bestTechnician?->total ?? 0 }} order selesai</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-4">
+                        <span class="text-3xl">👤</span>
+                        <div>
+                            <p class="text-gray-500 text-sm">Customer Teraktif</p>
+                            <h3 class="text-xl font-bold mt-1">
+                                {{ $topCustomer?->nama ?? 'N/A' }}
+                            </h3>
+                            <p class="text-xs text-emerald-600">{{ $topCustomer?->total ?? 0 }} kali order</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
             {{-- QUICK ACTION --}}
             <div class="grid md:grid-cols-4 gap-5">
 
@@ -266,26 +309,96 @@
 @push('scripts')
 
     <script>
-        new Chart(document.getElementById('revenueChart'), {
-            type: 'line',
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+        const revenueData = @json(array_values($monthlyRevenue->toArray()));
+
+        const revData = months.map((m, i) => revenueData[i] || 0);
+
+        const revCtx = document.getElementById('revenueChart').getContext('2d');
+        const gradient = revCtx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+        gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+        new Chart(revCtx, {
+            type: 'bar',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
+                labels: months,
                 datasets: [{
-                    label: 'Pendapatan',
-                    data: @json(array_values($monthlyRevenue->toArray())),
+                    label: 'Pendapatan (Rp)',
+                    data: revData,
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    borderColor: '#059669',
+                    borderWidth: 2,
+                    borderRadius: 6,
+                }, {
+                    label: 'Trend',
+                    data: revData,
+                    type: 'line',
+                    borderColor: '#059669',
+                    backgroundColor: gradient,
+                    fill: true,
                     tension: .4,
-                    fill: true
+                    pointBackgroundColor: '#059669',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
                 }]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.dataset.label + ': Rp ' + Number(ctx.raw).toLocaleString('id-ID');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(v) { return 'Rp' + v.toLocaleString('id-ID'); }
+                        }
+                    }
+                }
             }
         });
+
+        const statusLabels = @json($orderStatus->keys());
+        const statusValues = @json($orderStatus->values());
+
+        const statusColors = {
+            'pending': '#f59e0b',
+            'dijadwalkan': '#3b82f6',
+            'proses': '#f97316',
+            'selesai': '#10b981',
+            'dibatalkan': '#ef4444',
+        };
 
         new Chart(document.getElementById('statusChart'), {
             type: 'doughnut',
             data: {
-                labels: @json($orderStatus->keys()),
+                labels: statusLabels,
                 datasets: [{
-                    data: @json($orderStatus->values())
+                    data: statusValues,
+                    backgroundColor: statusLabels.map(l => statusColors[l] || '#6b7280'),
+                    borderWidth: 2,
+                    borderColor: '#fff',
                 }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 16 }
+                    }
+                }
             }
         });
     </script>

@@ -28,14 +28,14 @@
                     <div>
                         <label class="text-sm font-medium text-gray-600">Tanggal Order</label>
                         <input type="date" name="tanggal_order" value="{{ date('Y-m-d') }}"
-                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 p-3">
+                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-emerald-500 p-3">
                     </div>
 
                     {{-- Customer --}}
                     <div>
                         <label class="text-sm font-medium text-gray-600">Customer</label>
-                        <select name="customer_id"
-                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 p-3">
+                        <select name="customer_id" x-model="customer_id"
+                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-emerald-500 p-3">
                             <option value="">Pilih Customer</option>
                             @foreach ($customers as $customer)
                                 <option value="{{ $customer->id }}">{{ $customer->nama }}</option>
@@ -47,7 +47,7 @@
                     <div>
                         <label class="text-sm font-medium text-gray-600">Teknisi</label>
                         <select name="technician_id"
-                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 p-3">
+                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-emerald-500 p-3">
                             <option value="">Belum Ditentukan</option>
                             @foreach ($technicians as $technician)
                                 <option value="{{ $technician->id }}">{{ $technician->nama }}</option>
@@ -59,14 +59,14 @@
                     <div>
                         <label class="text-sm font-medium text-gray-600">Jadwal Servis</label>
                         <input type="datetime-local" name="jadwal_servis"
-                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 p-3">
+                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-emerald-500 p-3">
                     </div>
 
                     {{-- Status --}}
                     <div>
                         <label class="text-sm font-medium text-gray-600">Status</label>
                         <select name="status"
-                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 p-3">
+                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-emerald-500 p-3">
                             <option value="pending">Pending</option>
                             <option value="dijadwalkan">Dijadwalkan</option>
                             <option value="proses">Proses</option>
@@ -82,13 +82,13 @@
                     <div>
                         <label class="text-sm font-medium text-gray-600">Alamat Servis</label>
                         <textarea name="alamat_servis" rows="2"
-                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 p-3"></textarea>
+                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-emerald-500 p-3"></textarea>
                     </div>
 
                     <div>
                         <label class="text-sm font-medium text-gray-600">Keluhan</label>
                         <textarea name="keluhan" rows="2"
-                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 p-3"></textarea>
+                            class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-emerald-500 p-3"></textarea>
                     </div>
 
                 </div>
@@ -96,7 +96,7 @@
                 <div class="mt-5">
                     <label class="text-sm font-medium text-gray-600">Catatan</label>
                     <textarea name="catatan" rows="2"
-                        class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-indigo-500 p-3"></textarea>
+                        class="mt-1 w-full rounded-xl border-gray-200 focus:ring-2 focus:ring-emerald-500 p-3"></textarea>
                 </div>
 
             </div>
@@ -119,6 +119,7 @@
                         <thead class="bg-gray-50 text-gray-600">
                             <tr>
                                 <th class="p-3 text-left">Layanan</th>
+                                <th class="p-3 text-left">Unit AC</th>
                                 <th class="p-3 text-left">Harga</th>
                                 <th class="p-3 text-left">Qty</th>
                                 <th class="p-3 text-left">Subtotal</th>
@@ -142,6 +143,14 @@
                                                     {{ $service->nama_layanan }}
                                                 </option>
                                             @endforeach
+                                        </select>
+                                    </td>
+
+                                    <td class="p-3 min-w-[200px]">
+                                        <select :name="'items[' + index + '][customer_ac_unit_id]'"
+                                            class="w-full rounded-lg border-gray-200 p-2"
+                                            x-init="initAcUnitSelect($el, index)"
+                                            x-model="item.customer_ac_unit_id">
                                         </select>
                                     </td>
 
@@ -241,19 +250,48 @@
         function serviceOrder() {
             return {
                 services: @json($services),
+                allAcUnits: @json($acUnits),
+                customer_id: '',
                 diskon: 0,
                 subtotal_sparepart: 0,
 
                 items: [{
                     service_id: '',
+                    customer_ac_unit_id: '',
                     harga: 0,
                     qty: 1,
                     subtotal: 0,
                 }],
 
+                get availableAcUnits() {
+                    if (!this.customer_id) return [];
+                    return this.allAcUnits.filter(u => u.customer_id == this.customer_id);
+                },
+
+                initAcUnitSelect(el, index) {
+                    const render = () => {
+                        const units = this.availableAcUnits;
+                        const currentVal = this.items[index].customer_ac_unit_id;
+                        let html = '<option value="">Pilih Unit AC</option>';
+                        units.forEach(u => {
+                            html += '<option value="' + u.id + '">' + u.label + '</option>';
+                        });
+                        el.innerHTML = html;
+                        if (currentVal && units.some(u => u.id == currentVal)) {
+                            el.value = currentVal;
+                        } else {
+                            el.value = '';
+                            this.items[index].customer_ac_unit_id = '';
+                        }
+                    };
+                    this.$watch('customer_id', render);
+                    render();
+                },
+
                 addRow() {
                     this.items.push({
                         service_id: '',
+                        customer_ac_unit_id: '',
                         harga: 0,
                         qty: 1,
                         subtotal: 0

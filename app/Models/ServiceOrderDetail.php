@@ -13,6 +13,7 @@ class ServiceOrderDetail extends Model
 
     protected $fillable = [
         'service_order_id',
+        'customer_ac_unit_id',
         'service_id',
         'harga',
         'qty',
@@ -28,5 +29,11 @@ class ServiceOrderDetail extends Model
     public function service()
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function acUnit()
+    {
+        return $this->belongsTo(customer_ac_units::class, 'customer_ac_unit_id')
+            ->withTrashed();
     }
 }

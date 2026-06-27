@@ -1,7 +1,7 @@
 <aside
     x-data="{
-        openMaster: {{ request()->routeIs('admin.customers.*', 'admin.technicians.*', 'admin.services.*') ? 'true' : 'false' }},
-        openTransaksi: {{ request()->routeIs('admin.service-orders.*', 'admin.invoices.*', 'admin.payments.*') ? 'true' : 'false' }},
+        openMaster: {{ request()->routeIs('admin.technicians.*', 'admin.services.*', 'admin.ac-brands.*', 'admin.ac-types.*', 'admin.ac-capacities.*') ? 'true' : 'false' }},
+        openTransaksi: {{ request()->routeIs('admin.customers.*', 'admin.service-orders.*', 'admin.invoices.*', 'admin.payments.*') ? 'true' : 'false' }},
         openLaporan: {{ request()->routeIs('admin.reports.*') ? 'true' : 'false' }},
         openSetting: {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.activity-logs.*') ? 'true' : 'false' }}
     }"
@@ -41,8 +41,20 @@
             <span class="text-sm font-medium">Dashboard</span>
         </a>
 
+        {{-- ================= SCHEDULER ================= --}}
+        @can('schedules.view')
+        <a href="{{ route('admin.scheduler.index') }}"
+           class="flex items-center gap-3 px-3 py-3 rounded-xl
+                  transition-all duration-200 ease-in-out
+                  hover:bg-emerald-800/40 hover:translate-x-1 hover:scale-[1.01]
+                  {{ request()->routeIs('admin.scheduler.*') ? 'bg-emerald-600/30 ring-1 ring-emerald-400/40 shadow-lg' : '' }}">
+            <span class="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-700/40">📅</span>
+            <span class="text-sm font-medium">Penjadwalan</span>
+        </a>
+        @endcan
+
         {{-- ================= MASTER DATA ================= --}}
-        @canany(['customers.view', 'technicians.view', 'services.view'])
+        @canany(['technicians.view', 'services.view', 'ac-brands.view', 'ac-types.view', 'ac-capacities.view'])
         <div class="space-y-1">
 
             <button @click="openMaster = !openMaster"
@@ -70,9 +82,11 @@
                 x-transition:leave-end="opacity-0 -translate-y-1"
                 class="space-y-1 pl-1">
 
-                @foreach ([['route' => 'admin.customers.index', 'label' => 'Customer', 'icon' => '👥'],
-                          ['route' => 'admin.technicians.index', 'label' => 'Teknisi', 'icon' => '🛠️'],
-                          ['route' => 'admin.services.index', 'label' => 'Layanan', 'icon' => '❄️']] as $menu)
+                @foreach ([['route' => 'admin.technicians.index', 'label' => 'Teknisi', 'icon' => '🛠️'],
+                          ['route' => 'admin.services.index', 'label' => 'Layanan', 'icon' => '❄️'],
+                          ['route' => 'admin.ac-brands.index', 'label' => 'Merek AC', 'icon' => '🏭'],
+                          ['route' => 'admin.ac-types.index', 'label' => 'Tipe AC', 'icon' => '📐'],
+                          ['route' => 'admin.ac-capacities.index', 'label' => 'Kapasitas AC', 'icon' => '⚡']] as $menu)
 
                     <a href="{{ route($menu['route']) }}"
                        class="flex items-center gap-3 px-3 py-3 rounded-xl
@@ -94,7 +108,7 @@
         @endcanany
 
         {{-- ================= TRANSAKSI ================= --}}
-        @canany(['serviceorders.view', 'invoices.view', 'payments.view'])
+        @canany(['customers.view', 'serviceorders.view', 'invoices.view', 'payments.view'])
         <div class="space-y-1">
 
             <button @click="openTransaksi = !openTransaksi"
@@ -122,7 +136,8 @@
                 x-transition:leave-end="opacity-0 -translate-y-1"
                 class="space-y-1 pl-1">
 
-                @foreach ([['route' => 'admin.service-orders.index', 'label' => 'Data Pemesanan', 'icon' => '📋'],
+                @foreach ([['route' => 'admin.customers.index', 'label' => 'Data Customer', 'icon' => '👥'],
+                          ['route' => 'admin.service-orders.index', 'label' => 'Data Pemesanan', 'icon' => '📋'],
                           ['route' => 'admin.invoices.index', 'label' => 'Data Invoice', 'icon' => '🧾'],
                           ['route' => 'admin.payments.index', 'label' => 'Data Pembayaran', 'icon' => '🧾']] as $menu)
 

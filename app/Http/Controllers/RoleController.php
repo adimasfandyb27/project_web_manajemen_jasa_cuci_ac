@@ -26,7 +26,7 @@ class RoleController extends Controller
                 ->addColumn('permissions_count', function ($role) {
 
                     return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700">
-            ' . $role->permissions->count() . ' Permission
+            '.$role->permissions->count().' Permission
         </span>';
                 })
 
@@ -47,17 +47,17 @@ class RoleController extends Controller
                     return '
             <div class="flex items-center gap-2">
 
-                <a href="' . $showUrl . '"
+                <a href="'.$showUrl.'"
                     class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-sky-100 text-sky-600 hover:bg-sky-200 transition">
                     👁
                 </a>
 
-                <a href="' . $editUrl . '"
+                <a href="'.$editUrl.'"
                     class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-amber-100 text-amber-600 hover:bg-amber-200 transition">
                     ✏️
                 </a>
 
-                <a href="' . $deleteUrl . '"
+                <a href="'.$deleteUrl.'"
                     class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition">
                     delete
                 </a>
@@ -67,7 +67,7 @@ class RoleController extends Controller
 
                 ->rawColumns([
                     'permissions_count',
-                    'action'
+                    'action',
                 ])
 
                 ->make(true);
@@ -165,7 +165,7 @@ class RoleController extends Controller
     public function update(Request $request, Role $role)
     {
         $request->validate([
-            'name' => 'required|unique:roles,name,' . $role->id,
+            'name' => 'required|unique:roles,name,'.$role->id,
         ]);
 
         $role->update([
@@ -201,7 +201,7 @@ class RoleController extends Controller
     {
         if (in_array($role->name, [
             'Owner',
-            'Admin'
+            'Admin',
         ])) {
 
             return back()->with(

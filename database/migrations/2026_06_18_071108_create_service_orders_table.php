@@ -37,7 +37,7 @@ return new class extends Migration
                 'dijadwalkan',
                 'proses',
                 'selesai',
-                'dibatalkan'
+                'dibatalkan',
             ])->default('pending');
 
             $table->decimal('subtotal_jasa', 15, 2)->default(0);

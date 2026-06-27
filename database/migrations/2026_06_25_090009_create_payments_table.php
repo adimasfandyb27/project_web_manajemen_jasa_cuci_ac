@@ -22,12 +22,12 @@ return new class extends Migration
 
             $table->enum('payment_type', [
                 'dp',
-                'pelunasan'
+                'pelunasan',
             ]);
 
             $table->enum('payment_method', [
                 'cash',
-                'transfer'
+                'transfer',
             ]);
 
             $table->string('proof_file')->nullable();
@@ -35,7 +35,7 @@ return new class extends Migration
             $table->enum('status', [
                 'pending',
                 'verified',
-                'rejected'
+                'rejected',
             ])->default('pending');
 
             $table->timestamp('paid_at')->nullable();

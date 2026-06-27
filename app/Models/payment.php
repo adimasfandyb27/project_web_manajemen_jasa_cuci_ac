@@ -26,5 +26,4 @@ class payment extends Model
     {
         return $this->belongsTo(invoice::class);
     }
-
 }

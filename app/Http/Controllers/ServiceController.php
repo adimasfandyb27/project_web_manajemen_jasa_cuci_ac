@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -18,21 +17,21 @@ class ServiceController extends Controller
             return DataTables::of(Service::query())
                 ->addIndexColumn()
                 ->addColumn('harga_formatted', function ($row) {
-                    return 'Rp ' . number_format($row->harga, 0, ',', '.');
+                    return 'Rp '.number_format($row->harga, 0, ',', '.');
                 })
 
                 ->addColumn('action', function ($row) {
                     return '
                             <div class="flex items-center justify-center gap-2">
 
-                                <a href="' . route('admin.services.edit', $row->id) . '"
+                                <a href="'.route('admin.services.edit', $row->id).'"
                                     class="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700
                                     hover:bg-amber-100 text-xs font-medium border border-amber-100 transition">
                                     Edit
                                 </a>
 
-                                <form method="POST" action="' . route('admin.services.destroy', $row->id) . '">
-                                    ' . csrf_field() . method_field("DELETE") . '
+                                <form method="POST" action="'.route('admin.services.destroy', $row->id).'">
+                                    '.csrf_field().method_field('DELETE').'
 
                                     <button onclick="return confirm(\'Yakin hapus?\')"
                                         class="px-3 py-1.5 rounded-lg bg-red-50 text-red-600
@@ -58,6 +57,7 @@ class ServiceController extends Controller
     public function create()
     {
         $kode_layanan = Service::generateKode();
+
         // dd($kode_layanan);
         return view('admin.services.create', compact('kode_layanan'));
     }
@@ -108,6 +108,7 @@ class ServiceController extends Controller
     public function edit(string $id)
     {
         $service = Service::findOrFail($id);
+
         return view('admin.services.edit', compact('service'));
     }
 

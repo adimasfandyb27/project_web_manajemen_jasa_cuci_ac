@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -14,7 +14,7 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        app()[\Spatie\Permission\PermissionRegistrar::class]
+        app()[PermissionRegistrar::class]
             ->forgetCachedPermissions();
 
         $permissions = [
@@ -35,6 +35,21 @@ class RolePermissionSeeder extends Seeder
             'services.create',
             'services.edit',
             'services.delete',
+
+            'ac-brands.view',
+            'ac-brands.create',
+            'ac-brands.edit',
+            'ac-brands.delete',
+
+            'ac-types.view',
+            'ac-types.create',
+            'ac-types.edit',
+            'ac-types.delete',
+
+            'ac-capacities.view',
+            'ac-capacities.create',
+            'ac-capacities.edit',
+            'ac-capacities.delete',
 
             'service-orders.view',
             'service-orders.create',
@@ -57,11 +72,13 @@ class RolePermissionSeeder extends Seeder
             'roles.create',
             'roles.edit',
             'roles.delete',
+
+            'schedules.view',
         ];
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate([
-                'name' => $permission
+                'name' => $permission,
             ]);
         }
 
@@ -72,7 +89,7 @@ class RolePermissionSeeder extends Seeder
         */
 
         $owner = Role::firstOrCreate([
-            'name' => 'Owner'
+            'name' => 'Owner',
         ]);
 
         $owner->givePermissionTo(Permission::all());
@@ -84,7 +101,7 @@ class RolePermissionSeeder extends Seeder
         */
 
         $admin = Role::firstOrCreate([
-            'name' => 'Admin'
+            'name' => 'Admin',
         ]);
 
         $admin->givePermissionTo([
@@ -105,6 +122,21 @@ class RolePermissionSeeder extends Seeder
             'services.edit',
             'services.delete',
 
+            'ac-brands.view',
+            'ac-brands.create',
+            'ac-brands.edit',
+            'ac-brands.delete',
+
+            'ac-types.view',
+            'ac-types.create',
+            'ac-types.edit',
+            'ac-types.delete',
+
+            'ac-capacities.view',
+            'ac-capacities.create',
+            'ac-capacities.edit',
+            'ac-capacities.delete',
+
             'service-orders.view',
             'service-orders.create',
             'service-orders.edit',
@@ -116,6 +148,8 @@ class RolePermissionSeeder extends Seeder
             'invoices.delete',
 
             'reports.view',
+
+            'schedules.view',
         ]);
 
         /*
@@ -125,7 +159,7 @@ class RolePermissionSeeder extends Seeder
         */
 
         $cs = Role::firstOrCreate([
-            'name' => 'Customer Service'
+            'name' => 'Customer Service',
         ]);
 
         $cs->givePermissionTo([
@@ -141,6 +175,8 @@ class RolePermissionSeeder extends Seeder
 
             'invoices.view',
             'invoices.create',
+
+            'schedules.view',
         ]);
 
         /*
@@ -150,7 +186,7 @@ class RolePermissionSeeder extends Seeder
         */
 
         $teknisi = Role::firstOrCreate([
-            'name' => 'Teknisi'
+            'name' => 'Teknisi',
         ]);
 
         $teknisi->givePermissionTo([

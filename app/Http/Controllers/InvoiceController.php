@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -17,7 +18,7 @@ class InvoiceController extends Controller
     public function data(Request $request)
     {
         $query = Invoice::with([
-            'serviceOrder.customer'
+            'serviceOrder.customer',
         ])->latest();
 
         if ($request->filled('tanggal_dari')) {
@@ -38,7 +39,6 @@ class InvoiceController extends Controller
             );
         }
 
-
         return DataTables::of($query)
 
             ->addIndexColumn()
@@ -49,14 +49,14 @@ class InvoiceController extends Controller
 
             ->editColumn('tanggal_invoice', function ($row) {
                 return $row->tanggal_invoice
-                    ? \Carbon\Carbon::parse(
+                    ? Carbon::parse(
                         $row->tanggal_invoice
                     )->format('d/m/Y')
                     : '-';
             })
 
             ->addColumn('total_rupiah', function ($row) {
-                return 'Rp ' .
+                return 'Rp '.
                     number_format(
                         $row->total,
                         0,
@@ -98,7 +98,7 @@ class InvoiceController extends Controller
                 $buttons = '
     <div class="flex items-center justify-center gap-2">
 
-        <a href="' . route('admin.invoices.show', $row->id) . '"
+        <a href="'.route('admin.invoices.show', $row->id).'"
             class="inline-flex items-center px-3 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium transition">
 
             Detail
@@ -106,28 +106,28 @@ class InvoiceController extends Controller
     ';
 
                 // tombol lunas / upload bukti
-        //         if ($row->status == 'belum_bayar') {
+                //         if ($row->status == 'belum_bayar') {
 
-        //             $buttons .= '
-        // <button
-        //     type="button"
-        //     data-id="' . $row->id . '"
-        //     class="btn-lunas px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition">
+                //             $buttons .= '
+                // <button
+                //     type="button"
+                //     data-id="' . $row->id . '"
+                //     class="btn-lunas px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium transition">
 
-        //     Lunas
-        // </button>
-        // ';
-        //         }
+                //     Lunas
+                // </button>
+                // ';
+                //         }
 
                 // kalau sudah lunas (opsional: tampilkan badge)
-        //         if ($row->status == 'lunas') {
+                //         if ($row->status == 'lunas') {
 
-        //             $buttons .= '
-        // <span class="px-3 py-2 rounded-lg bg-green-100 text-green-700 text-xs font-semibold">
-        //     Sudah Lunas
-        // </span>
-        // ';
-        //         }
+                //             $buttons .= '
+                // <span class="px-3 py-2 rounded-lg bg-green-100 text-green-700 text-xs font-semibold">
+                //     Sudah Lunas
+                // </span>
+                // ';
+                //         }
 
                 $buttons .= '</div>';
 
@@ -136,7 +136,7 @@ class InvoiceController extends Controller
 
             ->rawColumns([
                 'status_badge',
-                'aksi'
+                'aksi',
             ])
 
             ->make(true);
@@ -148,7 +148,10 @@ class InvoiceController extends Controller
             'payments',
             'serviceOrder.customer',
             'serviceOrder.technician',
-            'serviceOrder.details.service'
+            'serviceOrder.details.service',
+            'serviceOrder.details.acUnit.brand',
+            'serviceOrder.details.acUnit.type',
+            'serviceOrder.details.acUnit.capacity',
         ]);
 
         $pendingPayment = $invoice->payments
@@ -187,7 +190,7 @@ class InvoiceController extends Controller
 
         $invoice->update([
             'diskon' => $diskon,
-            'total'  => $invoice->subtotal - $diskon,
+            'total' => $invoice->subtotal - $diskon,
         ]);
 
         activity()
@@ -233,7 +236,7 @@ class InvoiceController extends Controller
     public function markAsPaid(Invoice $invoice)
     {
         $invoice->update([
-            'status' => 'lunas'
+            'status' => 'lunas',
         ]);
 
         activity()
@@ -300,18 +303,18 @@ class InvoiceController extends Controller
         $invoice->load([
             'serviceOrder.customer',
             'serviceOrder.technician',
-            'serviceOrder.details.service'
+            'serviceOrder.details.service',
         ]);
 
         $pdf = Pdf::loadView('admin.invoices.export', compact('invoice'));
 
-        return $pdf->stream('invoice-' . $invoice->nomor_invoice . '.pdf');
+        return $pdf->stream('invoice-'.$invoice->nomor_invoice.'.pdf');
     }
 
     public function exportPdf(Request $request)
     {
         $query = Invoice::with([
-            'serviceOrder.customer'
+            'serviceOrder.customer',
         ])->latest();
 
         if ($request->filled('tanggal_dari')) {
@@ -340,7 +343,7 @@ class InvoiceController extends Controller
         );
 
         return $pdf->stream(
-            'laporan-invoice-' . now()->format('YmdHis') . '.pdf'
+            'laporan-invoice-'.now()->format('YmdHis').'.pdf'
         );
     }
 }

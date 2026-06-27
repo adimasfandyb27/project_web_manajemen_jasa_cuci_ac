@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\Invoice;
 use App\Models\ServiceOrder;
 use App\Models\ServiceOrderDetail;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -25,8 +24,8 @@ class ReportController extends Controller
 
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('created_at', [
-                $request->start_date . ' 00:00:00',
-                $request->end_date . ' 23:59:59',
+                $request->start_date.' 00:00:00',
+                $request->end_date.' 23:59:59',
             ]);
         }
 
@@ -37,8 +36,8 @@ class ReportController extends Controller
             function ($q) use ($request) {
                 if ($request->filled('start_date') && $request->filled('end_date')) {
                     $q->whereBetween('created_at', [
-                        $request->start_date . ' 00:00:00',
-                        $request->end_date . ' 23:59:59',
+                        $request->start_date.' 00:00:00',
+                        $request->end_date.' 23:59:59',
                     ]);
                 }
             }
@@ -65,8 +64,8 @@ class ReportController extends Controller
 
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('created_at', [
-                $request->start_date . ' 00:00:00',
-                $request->end_date . ' 23:59:59'
+                $request->start_date.' 00:00:00',
+                $request->end_date.' 23:59:59',
             ]);
         }
 
@@ -97,7 +96,7 @@ class ReportController extends Controller
 
             // GRAND TOTAL
             ->editColumn('grand_total', function ($row) {
-                return 'Rp ' . number_format($row->grand_total, 0, ',', '.');
+                return 'Rp '.number_format($row->grand_total, 0, ',', '.');
             })
 
             // STATUS BADGE (biar UI konsisten modern)
@@ -113,13 +112,13 @@ class ReportController extends Controller
 
                 return '
                 <span class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 font-semibold">
-                    ' . ucfirst($row->status) . '
+                    '.ucfirst($row->status).'
                 </span>
             ';
             })
 
             ->rawColumns([
-                'status_badge'
+                'status_badge',
             ])
 
             ->make(true);
@@ -144,9 +143,9 @@ class ReportController extends Controller
         $data = $query->latest()->get();
 
         $pdf = Pdf::loadView('admin.reports.service-orders.pdf', [
-            'data'  => $data,
+            'data' => $data,
             'start' => $start,
-            'end'   => $end,
+            'end' => $end,
         ])->setPaper('a4', 'landscape');
 
         // ✅ RETURN YANG BENAR
@@ -205,20 +204,18 @@ class ReportController extends Controller
 
         return DataTables::of($query)
 
-            ->addColumn('customer_name', fn($row) => $row->customer?->nama ?? '-')
+            ->addColumn('customer_name', fn ($row) => $row->customer?->nama ?? '-')
 
-            ->addColumn('invoice_number', fn($row) => $row->invoice?->nomor_invoice ?? '-')
+            ->addColumn('invoice_number', fn ($row) => $row->invoice?->nomor_invoice ?? '-')
 
             ->editColumn(
                 'grand_total',
-                fn($row) =>
-                'Rp ' . number_format($row->grand_total, 0, ',', '.')
+                fn ($row) => 'Rp '.number_format($row->grand_total, 0, ',', '.')
             )
 
             ->editColumn(
                 'created_at',
-                fn($row) =>
-                $row->created_at->format('d/m/Y')
+                fn ($row) => $row->created_at->format('d/m/Y')
             )
 
             ->make(true);
@@ -263,8 +260,8 @@ class ReportController extends Controller
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereHas('serviceOrders', function ($q) use ($request) {
                 $q->whereBetween('created_at', [
-                    $request->start_date . ' 00:00:00',
-                    $request->end_date . ' 23:59:59'
+                    $request->start_date.' 00:00:00',
+                    $request->end_date.' 23:59:59',
                 ]);
             });
         }
@@ -287,22 +284,22 @@ class ReportController extends Controller
 
             if ($request->filled('start_date') && $request->filled('end_date')) {
                 $q->whereBetween('created_at', [
-                    $request->start_date . ' 00:00:00',
-                    $request->end_date . ' 23:59:59'
+                    $request->start_date.' 00:00:00',
+                    $request->end_date.' 23:59:59',
                 ]);
             }
         }]);
 
         return DataTables::of($query)
 
-            ->addColumn('nama', fn($row) => $row->nama)
-            ->addColumn('telepon', fn($row) => $row->telepon)
-            ->addColumn('alamat', fn($row) => $row->alamat ?? '-')
+            ->addColumn('nama', fn ($row) => $row->nama)
+            ->addColumn('telepon', fn ($row) => $row->telepon)
+            ->addColumn('alamat', fn ($row) => $row->alamat ?? '-')
 
             ->addColumn('total_order', function ($row) {
                 return '
                 <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                    ' . $row->service_orders_count . ' Order
+                    '.$row->service_orders_count.' Order
                 </span>
             ';
             })
@@ -317,8 +314,8 @@ class ReportController extends Controller
 
             if ($request->filled('start_date') && $request->filled('end_date')) {
                 $q->whereBetween('created_at', [
-                    $request->start_date . ' 00:00:00',
-                    $request->end_date . ' 23:59:59'
+                    $request->start_date.' 00:00:00',
+                    $request->end_date.' 23:59:59',
                 ]);
             }
         }]);

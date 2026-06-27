@@ -32,9 +32,9 @@ class ServiceOrder extends Model
     public static function generateKode()
     {
         $tanggal = now()->format('Ymd');
-        $prefix = 'SO' . $tanggal;
+        $prefix = 'SO'.$tanggal;
 
-        $last = static::where('nomor_order', 'like', $prefix . '%')
+        $last = static::where('nomor_order', 'like', $prefix.'%')
             ->orderByDesc('id')
             ->first();
 
@@ -44,7 +44,7 @@ class ServiceOrder extends Model
             $urutan = ((int) substr($last->nomor_order, -4)) + 1;
         }
 
-        return $prefix . str_pad(
+        return $prefix.str_pad(
             $urutan,
             4,
             '0',

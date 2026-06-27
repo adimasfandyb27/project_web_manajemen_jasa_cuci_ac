@@ -19,7 +19,7 @@ return new class extends Migration
 
             $table->enum('status', [
                 'aktif',
-                'nonaktif'
+                'nonaktif',
             ])->default('aktif');
 
             $table->text('alamat')->nullable();

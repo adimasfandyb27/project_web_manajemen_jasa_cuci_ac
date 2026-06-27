@@ -24,10 +24,10 @@ class TechnicianController extends Controller
                 ->addColumn('aksi', function ($row) {
                     return '
                     <div class="flex gap-2 justify-center">
-                        <a href="' . route('admin.technicians.edit', $row) . '" class="px-3 py-2 rounded-xl bg-amber-100 text-amber-700 text-sm font-medium">Edit</a>
+                        <a href="'.route('admin.technicians.edit', $row).'" class="px-3 py-2 rounded-xl bg-amber-100 text-amber-700 text-sm font-medium">Edit</a>
 
-                        <form action="' . route('admin.technicians.destroy', $row) . '" method="POST" onsubmit="return confirm(\'Hapus data ini?\')">
-                            ' . csrf_field() . method_field('DELETE') . '
+                        <form action="'.route('admin.technicians.destroy', $row).'" method="POST" onsubmit="return confirm(\'Hapus data ini?\')">
+                            '.csrf_field().method_field('DELETE').'
                             <button class="px-3 py-2 rounded-xl bg-red-100 text-red-700 text-sm font-medium">
                                 Hapus
                             </button>
@@ -48,6 +48,7 @@ class TechnicianController extends Controller
     public function create()
     {
         $kode_teknisi = Technician::generateKode();
+
         return view('admin.technicians.create', compact('kode_teknisi'));
     }
 
@@ -125,7 +126,7 @@ class TechnicianController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Technician $technician , Request $request)
+    public function destroy(Technician $technician, Request $request)
     {
         if ($technician->serviceOrders()->exists()) {
             return back()->with(

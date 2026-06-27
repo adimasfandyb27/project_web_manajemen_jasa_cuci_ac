@@ -6,17 +6,17 @@
 
     <!-- HERO -->
     <div
-        class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 p-8 text-white mb-8">
+        class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 p-6 md:p-8 text-white mb-8 shadow-xl">
 
         <div class="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full -translate-y-24 translate-x-20"></div>
         <div class="absolute bottom-0 left-0 w-52 h-52 bg-white/10 rounded-full translate-y-16 -translate-x-10"></div>
 
         <div class="relative z-10">
-            <h1 class="text-3xl font-bold mb-2">
+            <h1 class="text-2xl md:text-3xl font-bold mb-2">
                 Booking Service AC
             </h1>
 
-            <p class="text-emerald-50 max-w-2xl">
+            <p class="text-emerald-50 max-w-2xl text-sm md:text-base leading-relaxed">
                 Isi formulir berikut untuk mengajukan service atau cleaning AC.
                 Tim kami akan menghubungi Anda dan menjadwalkan kunjungan teknisi.
             </p>
@@ -25,12 +25,15 @@
     </div>
 
     @if ($errors->any())
-        <div class="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4">
-            <div class="font-semibold text-red-700 mb-2">
+        <div class="mb-6 bg-red-50 border border-red-200 rounded-2xl p-5">
+            <div class="font-semibold text-red-700 mb-2 flex items-center gap-2">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                </svg>
                 Mohon periksa kembali data berikut:
             </div>
 
-            <ul class="list-disc list-inside text-red-600 text-sm">
+            <ul class="list-disc list-inside text-red-600 text-sm space-y-1">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -44,7 +47,7 @@
         <div class="lg:col-span-2">
 
             <form x-data="customerOrder()" action="{{ route('customer.orders.store') }}" method="POST"
-                class="bg-white rounded-3xl shadow-sm border p-8">
+                class="bg-white rounded-3xl shadow-sm border p-6 md:p-8">
 
                 @csrf
 
@@ -99,64 +102,85 @@
                         <h3 class="font-bold text-gray-800">Pilih Layanan</h3>
 
                         <button type="button" @click="addRow()"
-                            class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-sm">
+                            class="px-4 py-3 md:py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition touch-btn">
                             + Tambah
                         </button>
                     </div>
 
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="text-left text-gray-500">
-                                <th>Layanan</th>
-                                <th>Harga</th>
-                                <th>Qty</th>
-                                <th>Subtotal</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            <template x-for="(item,index) in items" :key="index">
-
-                                <tr class="border-t">
-
-                                    <td class="py-2">
-                                        <select x-model="item.service_id" @change="syncService(index)"
-                                            :name="'items[' + index + '][service_id]'" class="w-full border rounded-lg p-2">
-
-                                            <option value="">Pilih</option>
-                                            @foreach ($services as $service)
-                                                <option value="{{ $service->id }}">
-                                                    {{ $service->nama_layanan }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </td>
-
-                                    <td>
-                                        <input type="hidden" :name="'items[' + index + '][harga]'" :value="item.harga">
-                                        <input type="text" x-model="item.harga" readonly
-                                            class="bg-gray-50 p-2 rounded w-full">
-                                    </td>
-
-                                    <td>
-                                        <input type="number" min="1" x-model="item.qty" @input="calc(index)"
-                                            :name="'items[' + index + '][qty]'" class="border p-2 rounded w-full">
-                                    </td>
-
-                                    <td>
-                                        <span x-text="format(item.subtotal)"></span>
-                                    </td>
-
-                                    <td>
-                                        <button type="button" @click="remove(index)" class="text-red-500">X</button>
-                                    </td>
-
+                    <div class="overflow-x-auto -mx-6 px-6 pb-2">
+                        <table class="w-full text-sm min-w-[500px]">
+                            <thead>
+                                <tr class="text-left text-gray-500">
+                                    <th class="pr-2 pb-2">Layanan</th>
+                                    <th class="pr-2 pb-2">Unit AC</th>
+                                    <th class="pr-2 pb-2">Harga</th>
+                                    <th class="pr-2 pb-2">Qty</th>
+                                    <th class="pr-2 pb-2">Subtotal</th>
+                                    <th class="pb-2"></th>
                                 </tr>
+                            </thead>
 
-                            </template>
-                        </tbody>
-                    </table>
+                            <tbody>
+                                <template x-for="(item,index) in items" :key="index">
+
+                                    <tr class="border-t">
+
+                                        <td class="py-2 pr-2">
+                                            <select x-model="item.service_id" @change="syncService(index)"
+                                                :name="'items[' + index + '][service_id]'"
+                                                class="w-full border border-gray-200 rounded-xl p-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500">
+
+                                                <option value="">Pilih</option>
+                                                @foreach ($services as $service)
+                                                    <option value="{{ $service->id }}">
+                                                        {{ $service->nama_layanan }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+
+                                        <td class="py-2 pr-2 min-w-[180px]">
+                                            <select x-model="item.customer_ac_unit_id"
+                                                :name="'items[' + index + '][customer_ac_unit_id]'"
+                                                class="w-full border border-gray-200 rounded-xl p-2.5 text-sm focus:ring-emerald-500 focus:border-emerald-500">
+                                                <option value="">Pilih Unit AC</option>
+                                                @foreach ($acUnits as $unit)
+                                                    <option value="{{ $unit['id'] }}">{{ $unit['label'] }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+
+                                        <td class="py-2 pr-2">
+                                            <input type="hidden" :name="'items[' + index + '][harga]'" :value="item.harga">
+                                            <input type="text" x-model="item.harga" readonly
+                                                class="bg-gray-50 border border-gray-200 p-2.5 rounded-xl w-24 text-sm">
+                                        </td>
+
+                                        <td class="py-2 pr-2">
+                                            <input type="number" min="1" x-model="item.qty" @input="calc(index)"
+                                                :name="'items[' + index + '][qty]'"
+                                                class="border border-gray-200 p-2.5 rounded-xl w-16 text-sm focus:ring-emerald-500 focus:border-emerald-500">
+                                        </td>
+
+                                        <td class="py-2 pr-2">
+                                            <span x-text="format(item.subtotal)" class="text-sm font-medium text-emerald-600 whitespace-nowrap"></span>
+                                        </td>
+
+                                        <td class="py-2">
+                                            <button type="button" @click="remove(index)"
+                                                class="w-9 h-9 flex items-center justify-center rounded-xl text-red-500 hover:bg-red-50 transition">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </button>
+                                        </td>
+
+                                    </tr>
+
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
 
                     <div class="mt-4 font-bold text-right">
                         Total: <span x-text="format(total())"></span>
@@ -168,12 +192,12 @@
                 <div class="flex gap-3">
 
                     <a href="{{ route('customer.orders') }}"
-                        class="flex-1 text-center py-3 rounded-2xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
+                        class="flex-1 text-center py-3.5 md:py-3 rounded-2xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition font-medium touch-btn">
                         Kembali
                     </a>
 
                     <button type="submit"
-                        class="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3 rounded-2xl font-semibold hover:shadow-xl hover:scale-[1.02] transition">
+                        class="flex-1 py-3.5 md:py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold hover:shadow-xl hover:scale-[1.02] transition touch-btn">
                         Kirim Permintaan
                     </button>
 
@@ -186,39 +210,39 @@
         <!-- SIDEBAR -->
         <div>
 
-            <div class="bg-white rounded-3xl shadow-sm border p-6 mb-5">
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 mb-5">
 
-                <h3 class="font-bold text-gray-800 mb-4">
-                    Mengapa Memilih Kami?
+                <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span>💡</span> Mengapa Memilih Kami?
                 </h3>
 
-                <div class="space-y-4">
+                <div class="space-y-5">
 
                     <div class="flex gap-3">
-                        <div class="text-2xl">👨‍🔧</div>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-lg shrink-0">👨‍🔧</div>
                         <div>
-                            <h4 class="font-semibold">Teknisi Berpengalaman</h4>
-                            <p class="text-sm text-gray-500">
+                            <h4 class="font-semibold text-gray-800 text-sm">Teknisi Berpengalaman</h4>
+                            <p class="text-xs text-gray-500 mt-0.5">
                                 Ditangani oleh teknisi profesional dan terpercaya.
                             </p>
                         </div>
                     </div>
 
                     <div class="flex gap-3">
-                        <div class="text-2xl">⚡</div>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-lg shrink-0">⚡</div>
                         <div>
-                            <h4 class="font-semibold">Respon Cepat</h4>
-                            <p class="text-sm text-gray-500">
+                            <h4 class="font-semibold text-gray-800 text-sm">Respon Cepat</h4>
+                            <p class="text-xs text-gray-500 mt-0.5">
                                 Order segera diproses setelah dikonfirmasi.
                             </p>
                         </div>
                     </div>
 
                     <div class="flex gap-3">
-                        <div class="text-2xl">💯</div>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-lg shrink-0">💯</div>
                         <div>
-                            <h4 class="font-semibold">Layanan Berkualitas</h4>
-                            <p class="text-sm text-gray-500">
+                            <h4 class="font-semibold text-gray-800 text-sm">Layanan Berkualitas</h4>
+                            <p class="text-xs text-gray-500 mt-0.5">
                                 Service dan cleaning sesuai standar profesional.
                             </p>
                         </div>
@@ -230,42 +254,42 @@
 
             <div class="bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-3xl p-6 shadow-lg">
 
-                <h3 class="font-bold text-lg mb-4">
-                    Proses Service
+                <h3 class="font-bold text-base md:text-lg mb-5">
+                    📋 Proses Service
                 </h3>
 
                 <div class="space-y-4">
 
                     <div class="flex items-center gap-3">
                         <div
-                            class="w-8 h-8 rounded-full bg-white text-emerald-600 flex items-center justify-center font-bold">
+                            class="w-9 h-9 rounded-full bg-white text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
                             1
                         </div>
-                        <span>Ajukan Order</span>
+                        <span class="text-sm">Ajukan Order</span>
                     </div>
 
                     <div class="flex items-center gap-3">
                         <div
-                            class="w-8 h-8 rounded-full bg-white text-emerald-600 flex items-center justify-center font-bold">
+                            class="w-9 h-9 rounded-full bg-white text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
                             2
                         </div>
-                        <span>Konfirmasi Admin</span>
+                        <span class="text-sm">Konfirmasi Admin</span>
                     </div>
 
                     <div class="flex items-center gap-3">
                         <div
-                            class="w-8 h-8 rounded-full bg-white text-emerald-600 flex items-center justify-center font-bold">
+                            class="w-9 h-9 rounded-full bg-white text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
                             3
                         </div>
-                        <span>Teknisi Datang</span>
+                        <span class="text-sm">Teknisi Datang</span>
                     </div>
 
                     <div class="flex items-center gap-3">
                         <div
-                            class="w-8 h-8 rounded-full bg-white text-emerald-600 flex items-center justify-center font-bold">
+                            class="w-9 h-9 rounded-full bg-white text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
                             4
                         </div>
-                        <span>Service Selesai</span>
+                        <span class="text-sm">Service Selesai</span>
                     </div>
 
                 </div>
@@ -284,6 +308,7 @@
 
                 items: [{
                     service_id: '',
+                    customer_ac_unit_id: '',
                     harga: 0,
                     qty: 1,
                     subtotal: 0
@@ -292,6 +317,7 @@
                 addRow() {
                     this.items.push({
                         service_id: '',
+                        customer_ac_unit_id: '',
                         harga: 0,
                         qty: 1,
                         subtotal: 0

@@ -280,6 +280,7 @@
                 <thead>
                     <tr>
                         <th>Layanan</th>
+                        <th>Unit AC</th>
                         <th class="text-center">Qty</th>
                         <th class="text-right">Harga</th>
                         <th class="text-right">Subtotal</th>
@@ -291,6 +292,15 @@
                     @foreach ($invoice->serviceOrder->details as $detail)
                         <tr>
                             <td>{{ $detail->service->nama_layanan }}</td>
+                            <td>
+                                @if ($detail->acUnit)
+                                    {{ $detail->acUnit->brand->nama ?? '-' }}
+                                    - {{ $detail->acUnit->type->nama ?? '-' }}
+                                    ({{ $detail->acUnit->capacity->label ?? '-' }})
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td class="text-center">{{ $detail->qty }}</td>
                             <td class="text-right">Rp {{ number_format($detail->harga, 0, ',', '.') }}</td>
                             <td class="text-right">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>

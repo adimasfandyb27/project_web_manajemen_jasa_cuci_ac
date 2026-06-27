@@ -45,7 +45,7 @@ class Invoice extends Model
             $nomor = 1;
         }
 
-        return 'INV-NS-' . $tanggal . '-' .
+        return 'INV-NS-'.$tanggal.'-'.
             str_pad($nomor, 4, '0', STR_PAD_LEFT);
     }
 }

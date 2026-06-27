@@ -3,273 +3,142 @@
 @section('title', 'Invoice / Tagihan')
 
 @section('content')
-
     @php
-
         $invoiceCollection = $invoices->getCollection();
-
-        $dpInvoices = $invoiceCollection
-            ->filter(function ($invoice) {
-                $paid = $invoice->payments->where('status', 'verified')->sum('amount');
-
-                return $paid > 0 && $invoice->status != 'lunas';
-            })
-            ->count();
-
-        $belumBayar = $invoiceCollection
-            ->filter(function ($invoice) {
-                $paid = $invoice->payments->where('status', 'verified')->sum('amount');
-
-                return $paid == 0 && $invoice->status != 'lunas';
-            })
-            ->count();
-
+        $dpInvoices = $invoiceCollection->filter(fn($i) => $i->payments->where('status', 'verified')->sum('amount') > 0 && $i->status != 'lunas')->count();
+        $belumBayar = $invoiceCollection->filter(fn($i) => $i->payments->where('status', 'verified')->sum('amount') == 0 && $i->status != 'lunas')->count();
         $lunas = $invoiceCollection->where('status', 'lunas')->count();
-
     @endphp
 
     <div class="space-y-6">
-
-        {{-- HEADER --}}
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">
-                Tagihan Saya
-            </h1>
-
-            <p class="text-sm text-gray-500">
-                Daftar invoice layanan AC Anda
-            </p>
+        {{-- HERO --}}
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 p-8 text-white shadow-xl">
+            <div class="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full -translate-y-24 translate-x-20"></div>
+            <div class="absolute bottom-0 left-0 w-52 h-52 bg-white/10 rounded-full translate-y-16 -translate-x-10"></div>
+            <div class="relative z-10">
+                <h1 class="text-3xl font-bold mb-2">Tagihan Saya</h1>
+                <p class="text-emerald-50 max-w-xl">Daftar invoice layanan AC Anda. Pantau status pembayaran dan lakukan pembayaran dengan mudah.</p>
+            </div>
         </div>
 
-        {{-- SUMMARY --}}
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-
-            <div class="bg-white rounded-2xl shadow p-5 border border-gray-100">
-                <p class="text-sm text-gray-500">
-                    Total Invoice
-                </p>
-
-                <p class="text-2xl font-bold text-gray-800">
-                    {{ $invoices->total() }}
-                </p>
+        {{-- SUMMARY CARDS --}}
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 transition">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <p class="text-[10px] md:text-xs uppercase tracking-wider text-slate-400 font-medium">Total</p>
+                        <p class="text-xl md:text-2xl font-bold text-slate-800 mt-0.5">{{ $invoices->total() }}</p>
+                    </div>
+                    <div class="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-emerald-100 flex items-center justify-center text-base md:text-xl shrink-0">🧾</div>
+                </div>
             </div>
-
-            <div class="bg-white rounded-2xl shadow p-5 border border-gray-100">
-                <p class="text-sm text-gray-500">
-                    DP Dibayar
-                </p>
-
-                <p class="text-2xl font-bold text-orange-500">
-                    {{ $dpInvoices }}
-                </p>
+            <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 transition">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <p class="text-[10px] md:text-xs uppercase tracking-wider text-slate-400 font-medium">DP Dibayar</p>
+                        <p class="text-xl md:text-2xl font-bold text-orange-600 mt-0.5">{{ $dpInvoices }}</p>
+                    </div>
+                    <div class="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-orange-100 flex items-center justify-center text-base md:text-xl shrink-0">💰</div>
+                </div>
             </div>
-
-            <div class="bg-white rounded-2xl shadow p-5 border border-gray-100">
-                <p class="text-sm text-gray-500">
-                    Belum Bayar
-                </p>
-
-                <p class="text-2xl font-bold text-red-500">
-                    {{ $belumBayar }}
-                </p>
+            <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 transition">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <p class="text-[10px] md:text-xs uppercase tracking-wider text-slate-400 font-medium">Belum Bayar</p>
+                        <p class="text-xl md:text-2xl font-bold text-red-600 mt-0.5">{{ $belumBayar }}</p>
+                    </div>
+                    <div class="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-red-100 flex items-center justify-center text-base md:text-xl shrink-0">⏳</div>
+                </div>
             </div>
-
-            <div class="bg-white rounded-2xl shadow p-5 border border-gray-100">
-                <p class="text-sm text-gray-500">
-                    Sudah Lunas
-                </p>
-
-                <p class="text-2xl font-bold text-green-500">
-                    {{ $lunas }}
-                </p>
+            <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 transition">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <p class="text-[10px] md:text-xs uppercase tracking-wider text-slate-400 font-medium">Lunas</p>
+                        <p class="text-xl md:text-2xl font-bold text-emerald-600 mt-0.5">{{ $lunas }}</p>
+                    </div>
+                    <div class="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-emerald-100 flex items-center justify-center text-base md:text-xl shrink-0">✅</div>
+                </div>
             </div>
-
         </div>
 
         {{-- TABLE --}}
-        <div class="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
-
-            <div class="p-4 border-b flex justify-between items-center">
-
-                <h2 class="font-semibold text-gray-700">
-                    Daftar Invoice
-                </h2>
-
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                <h2 class="font-bold text-slate-800">Daftar Invoice</h2>
+                <span class="text-xs bg-slate-100 text-slate-500 px-3 py-1 rounded-full font-medium">{{ $invoices->total() }} data</span>
             </div>
 
             <div class="overflow-x-auto">
-
                 <table class="w-full text-sm">
-
-                    <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
-
-                        <tr>
-
-                            <th class="text-left p-4">
-                                No Invoice
-                            </th>
-
-                            <th class="text-left p-4">
-                                Tanggal
-                            </th>
-
-                            <th class="text-left p-4">
-                                Tagihan
-                            </th>
-
-                            <th class="text-left p-4">
-                                Status
-                            </th>
-
-                            <th class="text-left p-4">
-                                Aksi
-                            </th>
-
+                    <thead>
+                        <tr class="text-left text-xs uppercase tracking-wider text-slate-500 bg-slate-50">
+                            <th class="px-6 py-4 font-semibold">No Invoice</th>
+                            <th class="px-6 py-4 font-semibold">Tanggal</th>
+                            <th class="px-6 py-4 font-semibold">Tagihan</th>
+                            <th class="px-6 py-4 font-semibold">Status</th>
+                            <th class="px-6 py-4 font-semibold text-center">Aksi</th>
                         </tr>
-
                     </thead>
-
-                    <tbody class="divide-y">
-
+                    <tbody class="divide-y divide-slate-100">
                         @forelse ($invoices as $invoice)
                             @php
-
                                 $totalPaid = $invoice->payments->where('status', 'verified')->sum('amount');
-
                                 $remaining = max(0, $invoice->total - $totalPaid);
-
                             @endphp
-
-                            <tr class="hover:bg-gray-50 transition">
-
-                                {{-- NOMOR --}}
-                                <td class="p-4 font-medium text-gray-800">
-
-                                    {{ $invoice->nomor_invoice }}
-
+                            <tr class="hover:bg-emerald-50/50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <span class="font-semibold text-slate-800">{{ $invoice->nomor_invoice }}</span>
                                 </td>
-
-                                {{-- TANGGAL --}}
-                                <td class="p-4 text-gray-500">
-
-                                    {{ $invoice->created_at->format('d M Y') }}
-
-                                </td>
-
-                                {{-- TAGIHAN --}}
-                                <td class="p-4">
-
+                                <td class="px-6 py-4 text-slate-500">{{ $invoice->created_at->format('d M Y') }}</td>
+                                <td class="px-6 py-4">
                                     @if ($invoice->status == 'lunas')
-                                        <div>
-
-                                            <div class="font-bold text-green-600">
-                                                Rp 0
-                                            </div>
-
-                                            <div class="text-xs text-gray-400">
-                                                Sudah Lunas
-                                            </div>
-
-                                        </div>
+                                        <span class="font-semibold text-emerald-600">Rp 0</span>
                                     @elseif ($totalPaid > 0)
                                         <div>
-
-                                            <div class="font-bold text-orange-600">
-
-                                                Rp {{ number_format($remaining, 0, ',', '.') }}
-
-                                            </div>
-
-                                            <div class="text-xs text-gray-400">
-
-                                                Sudah Dibayar:
-                                                Rp {{ number_format($totalPaid, 0, ',', '.') }}
-
-                                            </div>
-
+                                            <span class="font-semibold text-orange-600">Rp {{ number_format($remaining, 0, ',', '.') }}</span>
+                                            <p class="text-[11px] text-slate-400">Dibayar: Rp {{ number_format($totalPaid, 0, ',', '.') }}</p>
                                         </div>
                                     @else
-                                        <div class="font-semibold text-gray-800">
-
-                                            Rp {{ number_format($invoice->total, 0, ',', '.') }}
-
-                                        </div>
+                                        <span class="font-semibold text-slate-800">Rp {{ number_format($invoice->total, 0, ',', '.') }}</span>
                                     @endif
-
                                 </td>
-
-                                {{-- STATUS --}}
-                                <td class="p-4">
-
+                                <td class="px-6 py-4">
                                     @if ($invoice->status == 'lunas')
-                                        <span
-                                            class="px-3 py-1 text-xs rounded-full
-                                            bg-green-100 text-green-700">
-
-                                            ✓ Lunas
-
-                                        </span>
+                                        <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">✓ Lunas</span>
                                     @elseif ($totalPaid > 0)
-                                        <span
-                                            class="px-3 py-1 text-xs rounded-full
-                                            bg-orange-100 text-orange-700">
-
-                                            💰 DP Dibayar
-
-                                        </span>
+                                        <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">💰 DP Dibayar</span>
                                     @else
-                                        <span
-                                            class="px-3 py-1 text-xs rounded-full
-                                            bg-red-100 text-red-700">
-
-                                            ⏳ Belum Bayar
-
-                                        </span>
+                                        <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">⏳ Belum Bayar</span>
                                     @endif
-
                                 </td>
-
-                                {{-- AKSI --}}
-                                <td class="p-4">
-
+                                <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                                     <a href="{{ route('customer.invoices.show', $invoice->id) }}"
-                                        class="inline-flex items-center px-3 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition">
-
+                                        class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 font-medium text-xs transition-all touch-btn">
                                         Detail
-
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
                                     </a>
-
                                 </td>
-
                             </tr>
-
                         @empty
-
                             <tr>
-
-                                <td colspan="5" class="text-center p-8 text-gray-500">
-
-                                    Belum ada invoice
-
+                                <td colspan="5" class="text-center py-16 text-slate-400">
+                                    <div class="text-4xl mb-4">🧾</div>
+                                    <p class="font-medium text-slate-600">Belum Ada Invoice</p>
+                                    <p class="text-sm mt-1">Invoice akan muncul setelah order Anda dijadwalkan.</p>
                                 </td>
-
                             </tr>
                         @endforelse
-
                     </tbody>
-
                 </table>
-
             </div>
 
-            <div class="p-4 border-t">
-
-                {{ $invoices->links() }}
-
-            </div>
-
+            @if ($invoices->hasPages())
+                <div class="px-6 py-4 border-t border-slate-100">
+                    {{ $invoices->links() }}
+                </div>
+            @endif
         </div>
-
     </div>
-
 @endsection

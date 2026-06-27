@@ -25,15 +25,15 @@ class CustomerProfileController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'nama'      => 'required|string|max:255',
-            'telepon'   => 'nullable|string|max:20',
-            'alamat'    => 'nullable|string',
-            'photo'     => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'nama' => 'required|string|max:255',
+            'telepon' => 'nullable|string|max:20',
+            'alamat' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $customer = Customer::where('user_id', auth()->id())->first();
 
-        if (!$customer) {
+        if (! $customer) {
             return back()->with('error', 'Data customer tidak ditemukan.');
         }
 

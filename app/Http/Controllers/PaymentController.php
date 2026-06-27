@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomerNotification;
 use App\Models\Payment;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -31,12 +32,17 @@ class PaymentController extends Controller
         ]);
     }
 
-
     public function data(Request $request)
     {
-        $query = Payment::with([
-            'invoice.serviceOrder.customer'
-        ]);
+        $query = Payment::query()
+            ->join('invoices', 'payments.invoice_id', '=', 'invoices.id')
+            ->join('service_orders', 'invoices.service_order_id', '=', 'service_orders.id')
+            ->join('customers', 'service_orders.customer_id', '=', 'customers.id')
+            ->select(
+                'payments.*',
+                'invoices.nomor_invoice',
+                'customers.nama as customer_name'
+            );
 
         if ($request->status) {
             $query->where(
@@ -65,23 +71,24 @@ class PaymentController extends Controller
 
             ->addIndexColumn()
 
-            ->addColumn('invoice_number', fn($row)
-            => $row->invoice->nomor_invoice)
+            ->editColumn('invoice_number', function ($row) {
+                return $row->nomor_invoice;
+            })
 
-            ->addColumn('customer', fn($row)
-            => $row->invoice->serviceOrder->customer->nama)
+            ->editColumn('customer', function ($row) {
+                return $row->customer_name;
+            })
 
-            ->addColumn('amount_rupiah', fn($row)
-            => 'Rp ' . number_format($row->amount, 0, ',', '.'))
+            ->addColumn('amount_rupiah', fn ($row) => 'Rp '.number_format($row->amount, 0, ',', '.'))
 
             ->addColumn('proof_button', function ($row) {
 
-                if (!$row->proof_file) {
+                if (! $row->proof_file) {
                     return '-';
                 }
 
                 return '
-            <a href="' . asset('storage/' . $row->proof_file) . '"
+            <a href="'.asset('storage/'.$row->proof_file).'"
                target="_blank"
                class="px-3 py-1 bg-blue-500 text-white rounded">
                Lihat Bukti
@@ -93,18 +100,15 @@ class PaymentController extends Controller
 
                 return match ($row->status) {
 
-                    'pending' =>
-                    '<span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded">
+                    'pending' => '<span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded">
                 Pending
             </span>',
 
-                    'verified' =>
-                    '<span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
+                    'verified' => '<span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
                 Verified
             </span>',
 
-                    'rejected' =>
-                    '<span class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">
+                    'rejected' => '<span class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">
                 Rejected
             </span>',
 
@@ -114,27 +118,17 @@ class PaymentController extends Controller
 
             ->addColumn('aksi', function ($row) {
 
-                if ($row->status === 'pending') {
-
-                    return '
-                <a href="' . route('admin.payments.show', $row->id) . '"
-                   class="px-3 py-1 bg-indigo-600 text-white rounded">
-                    Detail
-                </a>
-            ';
-                }
-
                 return '
-                    <a href="' . route('admin.payments.show', $row->id) . '"
-                    class="btn-detail">
+                <a href="'.route('admin.payments.show', $row->id).'"
+                   class="inline-flex items-center px-3 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium transition">
                     Detail
-                    </a>';
+                </a>';
             })
 
             ->rawColumns([
                 'proof_button',
                 'status_badge',
-                'aksi'
+                'aksi',
             ])
 
             ->make(true);
@@ -144,18 +138,18 @@ class PaymentController extends Controller
     {
         $payment = Payment::with([
             'invoice.serviceOrder.customer',
-            'invoice.serviceOrder.details.service'
+            'invoice.serviceOrder.details.service',
         ])->findOrFail($id);
 
         $pdf = Pdf::loadView('admin.payments.export', compact('payment'));
 
-        return $pdf->stream('Pembayaran-' . $payment->invoice->nomor_invoice . '.pdf');
+        return $pdf->stream('Pembayaran-'.$payment->invoice->nomor_invoice.'.pdf');
     }
 
     public function exportPdf(Request $request)
     {
         $query = Payment::with([
-            'invoice.serviceOrder.customer'
+            'invoice.serviceOrder.customer',
         ]);
 
         // Filter Status
@@ -184,6 +178,7 @@ class PaymentController extends Controller
 
         return $pdf->stream('Laporan-Data-Pembayaran.pdf');
     }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -206,7 +201,7 @@ class PaymentController extends Controller
     public function show(string $id)
     {
         $payment = Payment::with([
-            'invoice.serviceOrder.customer'
+            'invoice.serviceOrder.customer',
         ])->findOrFail($id);
 
         return view(
@@ -218,8 +213,24 @@ class PaymentController extends Controller
     public function reject(Payment $payment)
     {
         $payment->update([
-            'status' => 'rejected'
+            'status' => 'rejected',
         ]);
+
+        // ==================================
+        // NOTIFIKASI KE CUSTOMER
+        // ==================================
+
+        $serviceOrder = $payment->invoice->serviceOrder;
+        if ($serviceOrder && $serviceOrder->customer) {
+            CustomerNotification::createForCustomer(
+                $serviceOrder->customer->id,
+                "Pembayaran Ditolak - #{$payment->invoice->nomor_invoice}",
+                "Maaf, pembayaran Anda untuk invoice {$payment->invoice->nomor_invoice} ditolak. Silakan hubungi admin untuk detail lebih lanjut.",
+                'payment_rejected',
+                $payment->id,
+                Payment::class
+            );
+        }
 
         return back()->with(
             'success',
@@ -230,7 +241,7 @@ class PaymentController extends Controller
     public function verify(Payment $payment)
     {
         $payment->update([
-            'status' => 'verified'
+            'status' => 'verified',
         ]);
 
         $invoice = $payment->invoice;
@@ -242,13 +253,34 @@ class PaymentController extends Controller
         if ($totalPaid >= $invoice->total) {
 
             $invoice->update([
-                'status' => 'lunas'
+                'status' => 'lunas',
             ]);
         } else {
 
             $invoice->update([
-                'status' => 'bayar_sebagian'
+                'status' => 'bayar_sebagian',
             ]);
+        }
+
+        // ==================================
+        // NOTIFIKASI KE CUSTOMER
+        // ==================================
+
+        $serviceOrder = $invoice->serviceOrder;
+        if ($serviceOrder && $serviceOrder->customer) {
+            $isLunas = $totalPaid >= $invoice->total;
+            CustomerNotification::createForCustomer(
+                $serviceOrder->customer->id,
+                $isLunas
+                    ? "Pembayaran Lunas - #{$invoice->nomor_invoice}"
+                    : "Pembayaran Diverifikasi - #{$invoice->nomor_invoice}",
+                $isLunas
+                    ? "Pembayaran invoice {$invoice->nomor_invoice} telah lunas. Terima kasih!"
+                    : "Pembayaran DP untuk invoice {$invoice->nomor_invoice} telah diverifikasi.",
+                'payment_verified',
+                $payment->id,
+                Payment::class
+            );
         }
 
         return back()->with(

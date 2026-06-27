@@ -17,7 +17,7 @@ class ServiceOrderController extends Controller
     {
         $customer = Customer::where('user_id', auth()->id())->first();
 
-        if (!$customer) {
+        if (! $customer) {
             return back()->with('error', 'Customer tidak ditemukan');
         }
 
@@ -28,12 +28,11 @@ class ServiceOrderController extends Controller
         return view('customer.orders.index', compact('orders'));
     }
 
-
     public function create()
     {
         $customer = Customer::where('user_id', auth()->id())->first();
 
-        if (!$customer) {
+        if (! $customer) {
             return redirect()
                 ->route('customer.dashboard')
                 ->with('error', 'Data customer tidak ditemukan.');
@@ -47,7 +46,15 @@ class ServiceOrderController extends Controller
 
         $services = Service::all();
 
-        return view('customer.orders.create', compact('services'));
+        $acUnits = $customer->acUnits()->with(['brand', 'type', 'capacity'])->get()->map(function ($u) {
+            return [
+                'id' => $u->id,
+                'customer_id' => $u->customer_id,
+                'label' => ($u->brand?->nama ?? '-').' - '.($u->type?->nama ?? '-').' ('.($u->capacity?->label ?? '-').')',
+            ];
+        })->values();
+
+        return view('customer.orders.create', compact('services', 'acUnits'));
     }
 
     public function store(Request $request)
@@ -64,7 +71,7 @@ class ServiceOrderController extends Controller
 
         $customer = Customer::where('user_id', auth()->id())->first();
 
-        if (!$customer) {
+        if (! $customer) {
             return back()->with('error', 'Data customer tidak ditemukan');
         }
 
@@ -78,7 +85,7 @@ class ServiceOrderController extends Controller
             return back()
                 ->withInput()
                 ->withErrors([
-                    'jadwal_servis' => 'Kuota servis pada tanggal tersebut sudah penuh. Silakan pilih tanggal lain.'
+                    'jadwal_servis' => 'Kuota servis pada tanggal tersebut sudah penuh. Silakan pilih tanggal lain.',
                 ]);
         }
 
@@ -114,6 +121,7 @@ class ServiceOrderController extends Controller
 
                 ServiceOrderDetail::create([
                     'service_order_id' => $order->id,
+                    'customer_ac_unit_id' => $item['customer_ac_unit_id'] ?? null,
                     'service_id' => $service->id,
                     'harga' => $service->harga,
                     'qty' => $item['qty'],
@@ -157,11 +165,17 @@ class ServiceOrderController extends Controller
     {
         $customer = Customer::where('user_id', auth()->id())->first();
 
-        if (!$customer) {
+        if (! $customer) {
             abort(404);
         }
 
-        $order = ServiceOrder::where('id', $id)
+        $order = ServiceOrder::with([
+            'details.service',
+            'details.acUnit.brand',
+            'details.acUnit.type',
+            'details.acUnit.capacity',
+        ])
+            ->where('id', $id)
             ->where('customer_id', $customer->id)
             ->firstOrFail();
 
@@ -181,11 +195,24 @@ class ServiceOrderController extends Controller
                 ->with('error', 'Order tidak bisa diedit lagi');
         }
 
-        $order->load('details.service');
+        $order->load([
+            'details.service',
+            'details.acUnit.brand',
+            'details.acUnit.type',
+            'details.acUnit.capacity',
+        ]);
 
         $services = Service::all();
 
-        return view('customer.orders.edit', compact('order', 'services'));
+        $acUnits = $customer->acUnits()->with(['brand', 'type', 'capacity'])->get()->map(function ($u) {
+            return [
+                'id' => $u->id,
+                'customer_id' => $u->customer_id,
+                'label' => ($u->brand?->nama ?? '-').' - '.($u->type?->nama ?? '-').' ('.($u->capacity?->label ?? '-').')',
+            ];
+        })->values();
+
+        return view('customer.orders.edit', compact('order', 'services', 'acUnits'));
     }
 
     public function update(Request $request, $id)
@@ -216,11 +243,11 @@ class ServiceOrderController extends Controller
             return back()
                 ->withInput()
                 ->withErrors([
-                    'jadwal_servis' => 'Kuota servis pada tanggal tersebut sudah penuh.'
+                    'jadwal_servis' => 'Kuota servis pada tanggal tersebut sudah penuh.',
                 ]);
         }
 
-        DB::transaction(function () use ($request, $order, $customer) {
+        DB::transaction(function () use ($request, $order) {
 
             // =========================
             // UPDATE ORDER
@@ -249,6 +276,7 @@ class ServiceOrderController extends Controller
 
                 ServiceOrderDetail::create([
                     'service_order_id' => $order->id,
+                    'customer_ac_unit_id' => $item['customer_ac_unit_id'] ?? null,
                     'service_id' => $service->id,
                     'harga' => $service->harga,
                     'qty' => $item['qty'],
@@ -290,7 +318,7 @@ class ServiceOrderController extends Controller
     public function cancel(Request $request, $id)
     {
         $request->validate([
-            'cancel_reason' => 'required|min:10|max:500'
+            'cancel_reason' => 'required|min:10|max:500',
         ], [
             'cancel_reason.required' => 'Alasan pembatalan wajib diisi.',
             'cancel_reason.min' => 'Alasan pembatalan minimal 10 karakter.',

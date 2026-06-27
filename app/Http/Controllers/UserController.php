@@ -25,7 +25,7 @@ class UserController extends Controller
                 ->addColumn('roles', function ($user) {
                     return $user->roles->map(function ($role) {
                         return '<span class="px-2 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700 mr-1">'
-                            . $role->name .
+                            .$role->name.
                             '</span>';
                     })->implode(' ');
                 })
@@ -40,10 +40,10 @@ class UserController extends Controller
 
                     if ($user->id !== auth()->id()) {
                         $deleteButton = '
-            <form action="' . route('admin.users.destroy', $user) . '" method="POST"
+            <form action="'.route('admin.users.destroy', $user).'" method="POST"
                   onsubmit="return confirm(\'Yakin ingin menghapus user ini?\')">
-                ' . csrf_field() . '
-                ' . method_field('DELETE') . '
+                '.csrf_field().'
+                '.method_field('DELETE').'
 
                 <button type="submit"
                     class="w-9 h-9 flex items-center justify-center rounded-lg bg-red-100 text-red-600">
@@ -56,12 +56,12 @@ class UserController extends Controller
                     return '
         <div class="flex gap-2">
 
-            <a href="' . route('admin.users.edit', $user) . '"
+            <a href="'.route('admin.users.edit', $user).'"
                 class="w-9 h-9 flex items-center justify-center rounded-lg bg-amber-100 text-amber-600">
                 ✏️
             </a>
 
-            ' . $deleteButton . '
+            '.$deleteButton.'
 
         </div>
     ';
@@ -124,6 +124,7 @@ class UserController extends Controller
 
             dd($e->getMessage());
         }
+
         return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil dibuat');
     }

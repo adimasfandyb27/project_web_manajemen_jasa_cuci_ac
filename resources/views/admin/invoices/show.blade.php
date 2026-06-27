@@ -350,6 +350,7 @@
 
                             <tr>
                                 <th class="px-6 py-3 text-left">Layanan</th>
+                                <th class="px-6 py-3 text-left">Unit AC</th>
                                 <th class="px-6 py-3 text-center">Qty</th>
                                 <th class="px-6 py-3 text-right">Harga</th>
                                 <th class="px-6 py-3 text-right">Subtotal</th>
@@ -364,6 +365,16 @@
 
                                     <td class="px-6 py-4 font-medium text-gray-900">
                                         {{ $detail->service->nama_layanan }}
+                                    </td>
+
+                                    <td class="px-6 py-4 text-gray-700">
+                                        @if ($detail->acUnit)
+                                            {{ $detail->acUnit->brand->nama ?? '-' }}
+                                            - {{ $detail->acUnit->type->nama ?? '-' }}
+                                            ({{ $detail->acUnit->capacity->label ?? '-' }})
+                                        @else
+                                            <span class="text-gray-400">-</span>
+                                        @endif
                                     </td>
 
                                     <td class="px-6 py-4 text-center text-gray-700">

@@ -17,7 +17,7 @@ class Technician extends Model
         'nama',
         'telepon',
         'alamat',
-        'status'
+        'status',
     ];
 
     public static function generateKode()
@@ -30,8 +30,9 @@ class Technician extends Model
             ? ((int) substr($last->kode_teknisi, 3)) + 1
             : 1;
 
-        return 'TKN' . str_pad($urutan, 6, '0', STR_PAD_LEFT);
+        return 'TKN'.str_pad($urutan, 6, '0', STR_PAD_LEFT);
     }
+
     public function serviceOrders()
     {
         return $this->hasMany(ServiceOrder::class, 'technician_id');

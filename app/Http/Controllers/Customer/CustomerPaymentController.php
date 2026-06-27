@@ -13,15 +13,15 @@ class CustomerPaymentController extends Controller
     {
         // dd($request->all());
         $request->validate([
-            'invoice_id'     => 'required|exists:invoices,id',
-            'payment_type'   => 'required|in:dp,pelunasan',
+            'invoice_id' => 'required|exists:invoices,id',
+            'payment_type' => 'required|in:dp,pelunasan',
             'payment_method' => 'required|in:cash,transfer',
-            'proof_file'     => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'proof_file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
         $invoice = Invoice::with([
             'serviceOrder.customer',
-            'payments'
+            'payments',
         ])->findOrFail($request->invoice_id);
 
         // Pastikan invoice milik customer yang login
@@ -85,15 +85,14 @@ class CustomerPaymentController extends Controller
             ->store('payments', 'public');
 
         Payment::create([
-            'invoice_id'     => $invoice->id,
-            'amount'         => $amount,
-            'payment_type'   => $request->payment_type,
+            'invoice_id' => $invoice->id,
+            'amount' => $amount,
+            'payment_type' => $request->payment_type,
             'payment_method' => $request->payment_method,
-            'proof_file'     => $proofFile,
-            'status'         => 'pending',
-            'paid_at'        => now(),
+            'proof_file' => $proofFile,
+            'status' => 'pending',
+            'paid_at' => now(),
         ]);
-
 
         return redirect()
             ->route(
@@ -109,7 +108,7 @@ class CustomerPaymentController extends Controller
     public function history($invoiceId)
     {
         $invoice = Invoice::with([
-            'payments'
+            'payments',
         ])->findOrFail($invoiceId);
 
         if (
