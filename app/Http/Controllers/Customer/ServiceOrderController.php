@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\Customer;
 use App\Models\Service;
 use App\Models\ServiceOrder;
@@ -154,6 +155,14 @@ class ServiceOrderController extends Controller
                     'module' => 'Customer Order',
                 ])
                 ->log('Customer membuat order servis');
+
+            AdminNotification::createForAdmin(
+                "Pesanan Baru #{$order->nomor_order}",
+                "{$customer->nama} membuat pesanan servis baru.",
+                'new_order',
+                $order->id,
+                ServiceOrder::class
+            );
         });
 
         return redirect()
@@ -247,7 +256,7 @@ class ServiceOrderController extends Controller
                 ]);
         }
 
-        DB::transaction(function () use ($request, $order) {
+        DB::transaction(function () use ($request, $order, $customer) {
 
             // =========================
             // UPDATE ORDER
@@ -308,6 +317,14 @@ class ServiceOrderController extends Controller
                     'module' => 'Customer Order',
                 ])
                 ->log('Customer mengupdate order servis');
+
+            AdminNotification::createForAdmin(
+                "Pesanan Diubah #{$order->nomor_order}",
+                "{$customer->nama} mengubah pesanan servis.",
+                'order_updated',
+                $order->id,
+                ServiceOrder::class
+            );
         });
 
         return redirect()
@@ -354,6 +371,14 @@ class ServiceOrderController extends Controller
                 'module' => 'Customer Order',
             ])
             ->log('Customer membatalkan order servis');
+
+        AdminNotification::createForAdmin(
+            "Pesanan Dibatalkan #{$order->nomor_order}",
+            "{$customer->nama} membatalkan pesanan servis. Alasan: {$request->cancel_reason}",
+            'order_cancelled',
+            $order->id,
+            ServiceOrder::class
+        );
 
         return redirect()
             ->route('customer.orders')

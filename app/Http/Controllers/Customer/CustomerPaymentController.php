@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\Invoice;
 use App\Models\Payment;
 use Illuminate\Http\Request;
@@ -93,6 +94,14 @@ class CustomerPaymentController extends Controller
             'status' => 'pending',
             'paid_at' => now(),
         ]);
+
+        AdminNotification::createForAdmin(
+            "Pembayaran Baru - #{$invoice->nomor_invoice}",
+            "{$invoice->serviceOrder->customer->nama} mengirimkan bukti pembayaran {$request->payment_type} sebesar Rp ".number_format($amount, 0, ',', '.').'.',
+            'new_payment',
+            $invoice->id,
+            Invoice::class
+        );
 
         return redirect()
             ->route(

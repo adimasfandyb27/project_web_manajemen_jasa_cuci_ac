@@ -57,7 +57,7 @@
             </div>
 
         </div>
-        <form action="{{ route('admin.service-orders.update', $serviceOrder) }}" method="POST" class="space-y-6">
+        <form action="{{ route('admin.service-orders.update', $serviceOrder) }}" method="POST" class="space-y-6" x-on:submit="loading = true">
 
             @csrf
             @method('PUT')
@@ -560,13 +560,18 @@ hover:shadow-lg transition-all duration-300 p-6">
                     Kembali
                 </a>
 
-                <button type="submit"
+                <button type="submit" :disabled="loading"
                     class="px-6 py-3 rounded-2xl
     bg-emerald-600 hover:bg-emerald-700
     text-white font-semibold
     shadow-lg shadow-emerald-500/20
-    transition-all duration-300 hover:scale-105">
-                    Update Order
+    transition-all duration-300 hover:scale-105
+    disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100">
+                    <span x-show="!loading">Update Order</span>
+                    <span x-show="loading" class="flex items-center gap-2">
+                        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+                        Menyimpan...
+                    </span>
                 </button>
 
             </div>
@@ -577,7 +582,7 @@ hover:shadow-lg transition-all duration-300 p-6">
     <script>
         function serviceOrder() {
             return {
-
+                loading: false,
                 services: @json($services),
                 allAcUnits: @json($acUnits),
                 customer_id: {{ $serviceOrder->customer_id }},

@@ -39,9 +39,95 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
 
     @stack('styles')
+
+    <style>
+        /* DataTable row hover */
+        table.dataTable tbody tr {
+            transition: all 0.2s ease;
+        }
+        table.dataTable tbody tr:hover {
+            background-color: #f0fdf4 !important;
+        }
+        /* Entrance animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeInUp 0.6s ease-out both; }
+        .animate-fade-in-1 { animation-delay: 0.1s; }
+        .animate-fade-in-2 { animation-delay: 0.2s; }
+        .animate-fade-in-3 { animation-delay: 0.3s; }
+        .animate-fade-in-4 { animation-delay: 0.4s; }
+        .animate-fade-in-5 { animation-delay: 0.5s; }
+        .animate-scale-in { animation: fadeInScale 0.5s ease-out both; }
+        .animate-slide-down { animation: slideDown 0.5s ease-out both; }
+        /* Card hover premium */
+        .card-hover-effect {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover-effect:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+        }
+    </style>
 </head>
 
-<body class="font-sans antialiased bg-emerald-950/5 dark:bg-gray-950">
+<body class="font-sans antialiased bg-emerald-950/5 dark:bg-gray-950" x-data="adminNotifPoller()" x-init="init()">
+
+    {{-- LOADING BAR --}}
+    <div id="page-loader" class="fixed top-0 left-0 right-0 z-[9999] h-1">
+        <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg shadow-emerald-500/50 loading-bar-animate"></div>
+    </div>
+
+    <style>
+        @keyframes loaderPulse {
+            0% { width: 0; }
+            20% { width: 22%; }
+            40% { width: 38%; }
+            60% { width: 55%; }
+            80% { width: 70%; }
+            100% { width: 85%; }
+        }
+        .loading-bar-animate {
+            animation: loaderPulse 1.5s ease-in-out forwards;
+            width: 0%;
+        }
+    </style>
+
+    {{-- SPLASH SCREEN (first visit only) --}}
+    <div x-data="{ show: !sessionStorage.getItem('splashShown') }"
+         x-init="if(show) { setTimeout(() => { show = false; sessionStorage.setItem('splashShown', '1'); }, 1200); }"
+         x-show="show"
+         x-transition:leave.duration.500
+         x-cloak
+         class="fixed inset-0 z-[9998] flex flex-col items-center justify-center bg-gradient-to-br from-emerald-800 via-emerald-700 to-teal-800">
+
+        <div class="text-center" x-transition.duration.500>
+            <div class="w-28 h-28 mx-auto bg-white/15 backdrop-blur-xl rounded-3xl flex items-center justify-center shadow-2xl ring-1 ring-white/30">
+                <img src="{{ asset('img/logo.png') }}" class="w-16 h-16 object-contain" alt="CV Nisrina Jaya">
+            </div>
+
+            <h1 class="mt-6 text-2xl font-bold text-white tracking-tight">
+                CV. NISRINA JAYA
+            </h1>
+
+            <p class="mt-2 text-emerald-200/80 text-sm">
+                Service Management System
+            </p>
+
+            <div class="mt-8 flex justify-center">
+                <div class="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+            </div>
+        </div>
+    </div>
 
     <div class="flex h-screen overflow-hidden">
 
@@ -79,6 +165,98 @@
         </div>
 
     </div>
+
+    <script>
+        // Complete loading bar when DOM is ready
+        (function() {
+            var loader = document.getElementById('page-loader');
+            if (loader) {
+                var bar = loader.querySelector('div');
+                if (bar) {
+                    bar.style.animation = 'none';
+                    bar.style.width = '100%';
+                }
+                setTimeout(function() {
+                    loader.style.transition = 'opacity 0.4s ease';
+                    loader.style.opacity = '0';
+                    setTimeout(function() { loader.remove(); }, 400);
+                }, 150);
+            }
+        })();
+    </script>
+
+    <script>
+        function adminNotifPoller() {
+            return {
+                unreadCount: 0,
+                lastId: 0,
+                seenIds: new Set(),
+                pollInterval: null,
+
+                init() {
+                    this.loadSeenIds();
+                    this.fetchUnread();
+                    this.pollInterval = setInterval(() => this.fetchUnread(), 10000);
+                    document.addEventListener('visibilitychange', () => {
+                        if (!document.hidden) this.fetchUnread();
+                    });
+                },
+
+                loadSeenIds() {
+                    try {
+                        const stored = sessionStorage.getItem('adminNotifSeenIds');
+                        if (stored) this.seenIds = new Set(JSON.parse(stored));
+                    } catch(e) {}
+                },
+
+                saveSeenIds() {
+                    try {
+                        sessionStorage.setItem('adminNotifSeenIds', JSON.stringify([...this.seenIds]));
+                    } catch(e) {}
+                },
+
+                fetchUnread() {
+                    fetch('{{ route("admin.notifications.unread") }}')
+                        .then(r => r.json())
+                        .then(res => {
+                            this.unreadCount = res.total || 0;
+                            (res.data || []).forEach(n => {
+                                if (n.id > this.lastId && !this.seenIds.has(n.id)) {
+                                    this.showNotification(n);
+                                    this.seenIds.add(n.id);
+                                    this.saveSeenIds();
+                                    fetch('{{ url("/admin/notifications") }}/' + n.id + '/read', {
+                                        method: 'POST',
+                                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                                    });
+                                }
+                                if (n.id > this.lastId) this.lastId = n.id;
+                            });
+                        })
+                        .catch(() => {});
+                },
+
+                showNotification(n) {
+                    if (typeof Toast === 'undefined') return;
+                    Toast.fire({
+                        icon: 'info',
+                        title: n.title,
+                        text: n.message,
+                        timer: 6000,
+                    });
+                },
+
+                markAllRead() {
+                    fetch('{{ route("admin.notifications.read-all") }}', {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    }).then(() => {
+                        this.unreadCount = 0;
+                    }).catch(() => {});
+                }
+            };
+        }
+    </script>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 

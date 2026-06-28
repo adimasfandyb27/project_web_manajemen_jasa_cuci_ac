@@ -4,6 +4,7 @@ use App\Http\Controllers\AcBrandController;
 use App\Http\Controllers\AcCapacityController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AcTypeController;
+use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Customer\CustomerAcUnitController;
 use App\Http\Controllers\Customer\CustomerDashboardController;
 use App\Http\Controllers\Customer\CustomerInvoiceController;
@@ -183,6 +184,16 @@ Route::middleware(['auth', 'role:Owner|Admin|Teknisi'])
                 Route::get('/customers/pdf', [ReportController::class, 'exportCustomerPdf'])
                     ->name('customers.pdf');
             });
+
+        // ADMIN NOTIFICATIONS
+        Route::get('/notifications/unread', [AdminNotificationController::class, 'unread'])
+            ->name('notifications.unread');
+
+        Route::post('/notifications/{notification}/read', [AdminNotificationController::class, 'markAsRead'])
+            ->name('notifications.read');
+
+        Route::post('/notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])
+            ->name('notifications.read-all');
     });
 
 // customer

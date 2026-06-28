@@ -193,5 +193,15 @@ class RolePermissionSeeder extends Seeder
             'dashboard.view',
             'service-orders.view',
         ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | CUSTOMER
+        |--------------------------------------------------------------------------
+        */
+
+        Role::firstOrCreate([
+            'name' => 'Customer',
+        ]);
     }
 }

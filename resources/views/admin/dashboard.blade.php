@@ -20,13 +20,13 @@
         </div>
     </x-slot>
 
-    <div class="bg-slate-50 min-h-screen py-8">
+    <div class="bg-slate-50 min-h-screen py-8" x-data="dashboardStats()">
 
         <div class="max-w-7xl mx-auto px-4 space-y-8">
 
             {{-- HERO --}}
             <div
-                class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 p-8 text-white shadow-xl">
+                class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 p-8 text-white shadow-xl animate-slide-down">
 
                 <div class="absolute right-0 top-0 opacity-10 text-[180px]">
                     ❄️
@@ -65,9 +65,9 @@
             </div>
 
             {{-- STATISTIC --}}
-            <div class="grid md:grid-cols-2 xl:grid-cols-5 gap-5">
+            <div x-init="observeStats()" class="grid md:grid-cols-2 xl:grid-cols-5 gap-5">
 
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:-translate-y-1 transition">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:-translate-y-1 transition animate-fade-in animate-fade-in-1 card-hover-effect">
 
                     <div class="flex justify-between">
                         <div>
@@ -75,8 +75,8 @@
                                 Customer
                             </p>
 
-                            <h3 class="text-3xl font-bold mt-2">
-                                {{ $totalCustomer }}
+                            <h3 class="text-3xl font-bold mt-2" x-text="formatNumber(customer)">
+                                0
                             </h3>
                         </div>
 
@@ -87,7 +87,7 @@
 
                 </div>
 
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:-translate-y-1 transition">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:-translate-y-1 transition animate-fade-in animate-fade-in-2 card-hover-effect">
 
                     <div class="flex justify-between">
                         <div>
@@ -95,8 +95,8 @@
                                 Teknisi
                             </p>
 
-                            <h3 class="text-3xl font-bold mt-2">
-                                {{ $totalTechnician }}
+                            <h3 class="text-3xl font-bold mt-2" x-text="formatNumber(technician)">
+                                0
                             </h3>
                         </div>
 
@@ -107,7 +107,7 @@
 
                 </div>
 
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:-translate-y-1 transition">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:-translate-y-1 transition animate-fade-in animate-fade-in-3 card-hover-effect">
 
                     <div class="flex justify-between">
                         <div>
@@ -115,8 +115,8 @@
                                 Layanan
                             </p>
 
-                            <h3 class="text-3xl font-bold mt-2">
-                                {{ $totalService }}
+                            <h3 class="text-3xl font-bold mt-2" x-text="formatNumber(service)">
+                                0
                             </h3>
                         </div>
 
@@ -127,7 +127,7 @@
 
                 </div>
 
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:-translate-y-1 transition">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:-translate-y-1 transition animate-fade-in animate-fade-in-4 card-hover-effect">
 
                     <div class="flex justify-between">
                         <div>
@@ -135,8 +135,8 @@
                                 Order
                             </p>
 
-                            <h3 class="text-3xl font-bold mt-2">
-                                {{ $totalOrder }}
+                            <h3 class="text-3xl font-bold mt-2" x-text="formatNumber(order)">
+                                0
                             </h3>
                         </div>
 
@@ -147,14 +147,14 @@
 
                 </div>
 
-                <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl p-5 shadow-lg">
+                <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl p-5 shadow-lg animate-fade-in animate-fade-in-5 card-hover-effect">
 
                     <p class="text-sm text-emerald-100">
                         Pendapatan
                     </p>
 
-                    <h3 class="text-3xl font-bold mt-2">
-                        Rp {{ number_format($totalRevenue, 0, ',', '.') }}
+                    <h3 class="text-3xl font-bold mt-2" x-text="formatRevenue(revenue)">
+                        Rp 0
                     </h3>
 
                 </div>
@@ -162,11 +162,11 @@
             </div>
 
             {{-- CHART --}}
-            <div class="grid lg:grid-cols-3 gap-6">
+            <div class="grid lg:grid-cols-3 gap-6 animate-fade-in">
 
                 <div class="lg:col-span-2">
 
-                    <div class="bg-white rounded-3xl p-6 shadow-sm">
+                    <div class="bg-white rounded-3xl p-6 shadow-sm card-hover-effect">
 
                         <div class="flex justify-between items-center mb-6">
 
@@ -188,7 +188,7 @@
 
                 <div>
 
-                    <div class="bg-white rounded-3xl p-6 shadow-sm">
+                    <div class="bg-white rounded-3xl p-6 shadow-sm card-hover-effect">
 
                         <h3 class="font-bold text-gray-800 mb-6">
                             Status Order
@@ -205,7 +205,7 @@
             {{-- ANALYTICS --}}
             <div class="grid md:grid-cols-3 gap-5">
 
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 card-hover-effect animate-fade-in animate-fade-in-1">
                     <div class="flex items-center gap-4">
                         <span class="text-3xl">⏱️</span>
                         <div>
@@ -217,7 +217,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 card-hover-effect animate-fade-in animate-fade-in-3">
                     <div class="flex items-center gap-4">
                         <span class="text-3xl">🏆</span>
                         <div>
@@ -230,7 +230,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 card-hover-effect animate-fade-in animate-fade-in-5">
                     <div class="flex items-center gap-4">
                         <span class="text-3xl">👤</span>
                         <div>
@@ -309,6 +309,67 @@
 @push('scripts')
 
     <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('dashboardStats', () => ({
+                customer: 0,
+                technician: 0,
+                service: 0,
+                order: 0,
+                revenue: 0,
+                _targets: {
+                    customer: {{ $totalCustomer }},
+                    technician: {{ $totalTechnician }},
+                    service: {{ $totalService }},
+                    order: {{ $totalOrder }},
+                    revenue: {{ $totalRevenue }},
+                },
+                _animated: false,
+
+                observeStats() {
+                    const observer = new IntersectionObserver((entries) => {
+                        if (entries[0].isIntersecting && !this._animated) {
+                            this._animated = true;
+                            observer.disconnect();
+                            this.animateAll();
+                        }
+                    }, { threshold: 0.3 });
+                    observer.observe(this.$el);
+                },
+
+                animateAll() {
+                    const duration = 1000;
+                    const steps = 60;
+                    let step = 0;
+                    const timer = setInterval(() => {
+                        step++;
+                        const progress = Math.min(step / steps, 1);
+                        const eased = 1 - (1 - progress) * (1 - progress);
+                        this.customer = Math.round(this._targets.customer * eased);
+                        this.technician = Math.round(this._targets.technician * eased);
+                        this.service = Math.round(this._targets.service * eased);
+                        this.order = Math.round(this._targets.order * eased);
+                        this.revenue = Math.round(this._targets.revenue * eased);
+                        if (step >= steps) {
+                            this.customer = this._targets.customer;
+                            this.technician = this._targets.technician;
+                            this.service = this._targets.service;
+                            this.order = this._targets.order;
+                            this.revenue = this._targets.revenue;
+                            clearInterval(timer);
+                        }
+                    }, duration / steps);
+                },
+
+                formatNumber(n) {
+                    return n.toLocaleString('id-ID');
+                },
+
+                formatRevenue(n) {
+                    return 'Rp ' + n.toLocaleString('id-ID');
+                }
+            }));
+        });
+
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
         const revenueData = @json(array_values($monthlyRevenue->toArray()));
 

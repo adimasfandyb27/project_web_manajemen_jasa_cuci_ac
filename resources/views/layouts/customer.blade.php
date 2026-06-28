@@ -24,6 +24,45 @@
 
 <body class="bg-slate-50" x-data="notificationPoller()" x-init="init()">
 
+    {{-- LOADING BAR --}}
+    <div id="page-loader" class="fixed top-0 left-0 right-0 z-[9999] h-1">
+        <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg shadow-emerald-500/50 loading-bar-animate"></div>
+    </div>
+
+    <style>
+        @keyframes loaderPulse {
+            0% { width: 0; }
+            20% { width: 22%; }
+            40% { width: 38%; }
+            60% { width: 55%; }
+            80% { width: 70%; }
+            100% { width: 85%; }
+        }
+        .loading-bar-animate {
+            animation: loaderPulse 1.5s ease-in-out forwards;
+            width: 0%;
+        }
+    </style>
+
+    {{-- SPLASH SCREEN (first visit only) --}}
+    <div x-data="{ show: !sessionStorage.getItem('splashShown') }"
+         x-init="if(show) { setTimeout(() => { show = false; sessionStorage.setItem('splashShown', '1'); }, 1200); }"
+         x-show="show"
+         x-transition:leave.duration.500
+         x-cloak
+         class="fixed inset-0 z-[9998] flex flex-col items-center justify-center bg-gradient-to-br from-emerald-800 via-emerald-700 to-teal-800">
+        <div class="text-center" x-transition.duration.500>
+            <div class="w-28 h-28 mx-auto bg-white/15 backdrop-blur-xl rounded-3xl flex items-center justify-center shadow-2xl ring-1 ring-white/30">
+                <img src="{{ asset('img/logo.png') }}" class="w-16 h-16 object-contain" alt="CV Nisrina Jaya">
+            </div>
+            <h1 class="mt-6 text-2xl font-bold text-white tracking-tight">CV. NISRINA JAYA</h1>
+            <p class="mt-2 text-emerald-200/80 text-sm">Service Management System</p>
+            <div class="mt-8 flex justify-center">
+                <div class="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+            </div>
+        </div>
+    </div>
+
     {{-- MOBILE HEADER --}}
     <div class="md:hidden fixed top-0 inset-x-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-200/60">
         <div class="flex items-center justify-between px-4 h-16">
@@ -243,6 +282,21 @@
         @if (session('info'))
             Toast.fire({ icon: 'info', title: @json(session('info')) });
         @endif
+    </script>
+
+    <script>
+        (function() {
+            var loader = document.getElementById('page-loader');
+            if (loader) {
+                var bar = loader.querySelector('div');
+                if (bar) { bar.style.animation = 'none'; bar.style.width = '100%'; }
+                setTimeout(function() {
+                    loader.style.transition = 'opacity 0.4s ease';
+                    loader.style.opacity = '0';
+                    setTimeout(function() { loader.remove(); }, 400);
+                }, 150);
+            }
+        })();
     </script>
 </body>
 </html>

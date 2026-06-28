@@ -23,7 +23,7 @@
 
         {{-- SUMMARY CARDS --}}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 transition">
+            <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200">
                 <div class="flex items-center justify-between gap-2">
                     <div class="min-w-0">
                         <p class="text-[10px] md:text-xs uppercase tracking-wider text-slate-400 font-medium">Total</p>
@@ -32,7 +32,7 @@
                     <div class="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-emerald-100 flex items-center justify-center text-base md:text-xl shrink-0">🧾</div>
                 </div>
             </div>
-            <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 transition">
+            <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200">
                 <div class="flex items-center justify-between gap-2">
                     <div class="min-w-0">
                         <p class="text-[10px] md:text-xs uppercase tracking-wider text-slate-400 font-medium">DP Dibayar</p>
@@ -41,7 +41,7 @@
                     <div class="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-orange-100 flex items-center justify-center text-base md:text-xl shrink-0">💰</div>
                 </div>
             </div>
-            <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 transition">
+            <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200">
                 <div class="flex items-center justify-between gap-2">
                     <div class="min-w-0">
                         <p class="text-[10px] md:text-xs uppercase tracking-wider text-slate-400 font-medium">Belum Bayar</p>
@@ -50,7 +50,7 @@
                     <div class="w-9 h-9 md:w-11 md:h-11 rounded-xl bg-red-100 flex items-center justify-center text-base md:text-xl shrink-0">⏳</div>
                 </div>
             </div>
-            <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 transition">
+            <div class="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200">
                 <div class="flex items-center justify-between gap-2">
                     <div class="min-w-0">
                         <p class="text-[10px] md:text-xs uppercase tracking-wider text-slate-400 font-medium">Lunas</p>
